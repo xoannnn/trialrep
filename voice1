@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pronunciation Pattern Checker</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 650px;
+    padding: 40px;
+  }
+  button {
+    padding: 10px 16px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .word {
+    display: inline-block;
+    padding: 4px 8px;
+    margin: 3px;
+    border-radius: 5px;
+  }
+  .correct { background: #c8f7c5; }
+  .wrong { background: #f7c5c5; }
+  .extra { background: #f7e3c5; }
+  .result {
+    margin-top: 20px;
+    font-size: 18px;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>Pronunciation Practice</h2>
+
+<p>
+<strong>Say this pattern:</strong><br>
+<i>I have a _______ (fever / headache / toothache / sore throat)</i>
+</p>
+
+<button onclick="startRecording()">🎤 Start Speaking</button>
+
+<div class="result" id="result"></div>
+
+<script>
+/* ===== SETTINGS ===== */
+
+const pattern = ["i", "have", "a"];
+
+const symptoms = [
+  "fever",
+  "headache",
+  "toothache",
+  "sore throat",
+  "stomach ache"
+];
+
+/* ===== HELPERS ===== */
+
+function normalise(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, "")
+    .trim();
+}
+
+function analyseSentence(spoken) {
+  const words = spoken.split(" ");
+
+  const structureCheck = pattern.map((w, i) => words[i] === w);
+
+  const remaining = words.slice(pattern.length).join(" ");
+
+  return {
+    structureCheck,
+    symptomCorrect: symptoms.includes(remaining),
+    symptom: remaining,
+    extra: !symptoms.includes(remaining) && remaining ? remaining : null
+  };
+}
+
+/* ===== SPEECH ===== */
+
+function startRecording() {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Speech Recognition not supported in this browser.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+
+  document.getElementById("result").innerHTML = "Listening…";
+
+  recognition.start();
+
+  recognition.onresult = (event) => {
+    const spoken = normalise(event.results[0][0].transcript);
+    const analysis = analyseSentence(spoken);
+
+    let output = "<p><strong>Analysis:</strong></p>";
+
+    // Sentence structure
+    pattern.forEach((word, i) => {
+      output += `<span class="word ${
+        analysis.structureCheck[i] ? "correct" : "wrong"
+      }">${word}</span>`;
+    });
+
+    // Symptom
+    if (analysis.symptomCorrect) {
+      output += `<span class="word correct">${analysis.symptom}</span>`;
+    } else {
+      output += `<span class="word wrong">[symptom]</span>`;
+    }
+
+    // Extra words
+    if (analysis.extra) {
+      output += `<span class="word extra">${analysis.extra}</span>`;
+    }
+
+    // Feedback
+    let feedback = "❌ Try again.";
+
+    if (
+      analysis.structureCheck.every(Boolean) &&
+      analysis.symptomCorrect
+    ) {
+      feedback = "✅ Perfect sentence!";
+    } else if (analysis.structureCheck.every(Boolean)) {
+      feedback = "🟡 Good structure, wrong symptom.";
+    } else {
+      feedback = "🟠 Check the sentence pattern.";
+    }
+
+    document.getElementById("result").innerHTML = `
+      <p><strong>You said:</strong> "${spoken}"</p>
+      ${output}
+      <p>${feedback}</p>
+    `;
+  };
+
+  recognition.onerror = () => {
+    document.getElementById("result").innerHTML =
+      "❌ Error recognising speech. Try again.";
+  };
+}
+</script>
+
+</body>
+</html>
