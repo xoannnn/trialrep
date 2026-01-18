@@ -1,4 +1,121 @@
-function checkProblemResponse(resultId) {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pronunciation Practice</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      max-width: 900px;
+    }
+    .section {
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    .sentence {
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+    button {
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+    .word {
+      padding: 3px 6px;
+      margin: 2px;
+      display: inline-block;
+      border-radius: 4px;
+    }
+    .known { background: #c8f7c5; }
+    .unknown { background: #f7e3c5; }
+    .result {
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    small {
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Pronunciation Practice – Customer Service</h2>
+
+<div class="section">
+  <div class="sentence">1. Excuse me</div>
+  <button onclick="checkPronunciation('r1')">🎤 Check pronunciation</button>
+  <div class="result" id="r1"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">2. How may I help you</div>
+  <button onclick="checkPronunciation('r2')">🎤 Check pronunciation</button>
+  <div class="result" id="r2"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">3. I bought a __________</div>
+  <button onclick="checkPronunciation('r3')">🎤 Check pronunciation</button>
+  <div class="result" id="r3"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">
+    4. Shop attendant: What is wrong with it?
+  </div>
+  <button onclick="checkPronunciation('r4')">🎤 Check pronunciation</button>
+  <div class="result" id="r4"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">
+    5. It's __________________
+    <br>
+    <small>
+      (it is broken / it's malfunctioning / it has a defect / it spills water /
+      it made a small explosion / the keyboard is Korean / the screen is cracked /
+      the wire is broken / it has no legs / the camera is cracked / it has no hands /
+      the joysticks are broken / the screen has a defect / it's not working properly)
+    </small>
+  </div>
+  <button onclick="checkPronunciation('r5')">🎤 Check pronunciation</button>
+  <div class="result" id="r5"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">6. Yes, we can ________ (refund / repair / replace) it</div>
+  <button onclick="checkPronunciation('r6')">🎤 Check pronunciation</button>
+  <div class="result" id="r6"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">7. Sorry for the trouble</div>
+  <button onclick="checkPronunciation('r7')">🎤 Check pronunciation</button>
+  <div class="result" id="r7"></div>
+</div>
+
+<script>
+const knownWords = [
+  "excuse", "me",
+  "how", "may", "i", "help", "you",
+  "bought", "a",
+  "see", "the", "it",
+  "can", "yes", "we",
+  "sorry", "for", "trouble",
+
+  "microwave", "oven", "iphone", "tv", "laptop",
+  "washing", "machine", "fridge", "rice", "cooker",
+
+  "refund", "repair", "replace"
+];
+
+function normalise(text) {
+  return text.toLowerCase().replace(/[^\w\s]/g, '').trim();
+}
+
+function checkPronunciation(resultId) {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -31,16 +148,8 @@ function checkProblemResponse(resultId) {
       }
     });
 
-    const isValid = problemPhrases.includes(spoken);
-
     resultBox.innerHTML = `
       <p><em>You said:</em> "${spoken}"</p>
-      <p>
-        ${isValid
-          ? '<strong style="color: green;">✅ Appropriate customer response</strong>'
-          : '<strong style="color: red;">❌ Not an appropriate response for this situation</strong>'
-        }
-      </p>
       ${knownHTML}<br>
       ${unknownHTML}
     `;
@@ -50,3 +159,7 @@ function checkProblemResponse(resultId) {
     resultBox.innerHTML = "Error recognising speech. Try again.";
   };
 }
+</script>
+
+</body>
+</html>
