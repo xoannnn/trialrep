@@ -1,0 +1,189 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pronunciation Practice</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      max-width: 900px;
+    }
+    .section {
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    .sentence {
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+    button {
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+    .word {
+      padding: 3px 6px;
+      margin: 2px;
+      display: inline-block;
+      border-radius: 4px;
+    }
+    .known { background: #c8f7c5; }
+    .unknown { background: #f7e3c5; }
+    .result {
+      margin-top: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Pronunciation Practice – Customer Service</h2>
+
+<div class="section">
+  <div class="sentence">1. Excuse me</div>
+  <button onclick="checkPronunciation('r1')">🎤 Check pronunciation</button>
+  <div class="result" id="r1"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">2. How may I help you</div>
+  <button onclick="checkPronunciation('r2')">🎤 Check pronunciation</button>
+  <div class="result" id="r2"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">3. I bought a __________</div>
+  <button onclick="checkPronunciation('r3')">🎤 Check pronunciation</button>
+  <div class="result" id="r3"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">4. May I see the __________</div>
+  <button onclick="checkPronunciation('r4')">🎤 Check pronunciation</button>
+  <div class="result" id="r4"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">5. What is wrong with it?</div>
+  <button onclick="checkPronunciation('r5')">🎤 Check pronunciation</button>
+  <div class="result" id="r5"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">6. ______________________________________________</div>
+  <button onclick="checkPronunciation('r6', true)">🎤 Check pronunciation</button>
+  <div class="result" id="r6"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">7. Can you _______ (refund / repair / replace) it</div>
+  <button onclick="checkPronunciation('r7')">🎤 Check pronunciation</button>
+  <div class="result" id="r7"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">8. Yes, we can ________ (refund / repair / replace) it</div>
+  <button onclick="checkPronunciation('r8')">🎤 Check pronunciation</button>
+  <div class="result" id="r8"></div>
+</div>
+
+<div class="section">
+  <div class="sentence">9. Sorry for the trouble</div>
+  <button onclick="checkPronunciation('r9')">🎤 Check pronunciation</button>
+  <div class="result" id="r9"></div>
+</div>
+
+<script>
+const validProblemSentences = [
+  "it is broken",
+  "its malfunctioning",
+  "it has a defect",
+  "it spills water",
+  "it made a small explosion",
+  "the keyboard is korean",
+  "the screen is cracked",
+  "the wire is broken",
+  "it has no legs",
+  "the camera is cracked",
+  "it has no hands",
+  "the joysticks are broken",
+  "the screen has a defect",
+  "its not working properly"
+];
+
+const knownWords = [
+  "excuse","me","how","may","i","help","you",
+  "bought","a","see","the","it",
+  "what","is","wrong","with",
+  "can","yes","we","sorry","for","trouble",
+  "refund","repair","replace",
+  "broken","defect","screen","wire","camera",
+  "keyboard","joysticks","working","properly"
+];
+
+function normalise(text) {
+  return text.toLowerCase().replace(/[^\w\s]/g, "").trim();
+}
+
+function checkPronunciation(resultId, restrict = false) {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Speech Recognition not supported.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+
+  const resultBox = document.getElementById(resultId);
+  resultBox.innerHTML = "Listening...";
+
+  recognition.start();
+
+  recognition.onresult = (event) => {
+    const spoken = normalise(event.results[0][0].transcript);
+
+    if (restrict) {
+      if (validProblemSentences.includes(spoken)) {
+        resultBox.innerHTML = `
+          <p><em>You said:</em> "${spoken}"</p>
+          <p style="color:green;"><strong>✅ Correct</strong></p>
+        `;
+      } else {
+        resultBox.innerHTML = `
+          <p><em>You said:</em> "${spoken}"</p>
+          <p style="color:red;"><strong>❌ Try again</strong></p>
+        `;
+      }
+      return;
+    }
+
+    const words = spoken.split(" ");
+    let knownHTML = "<strong>Known words:</strong><br>";
+    let unknownHTML = "<strong>Other words:</strong><br>";
+
+    words.forEach(word => {
+      if (knownWords.includes(word)) {
+        knownHTML += `<span class="word known">${word}</span>`;
+      } else {
+        unknownHTML += `<span class="word unknown">${word}</span>`;
+      }
+    });
+
+    resultBox.innerHTML = `
+      <p><em>You said:</em> "${spoken}"</p>
+      ${knownHTML}<br>${unknownHTML}
+    `;
+  };
+
+  recognition.onerror = () => {
+    resultBox.innerHTML = "Error recognising speech. Try again.";
+  };
+}
+</script>
+
+</body>
+</html>
