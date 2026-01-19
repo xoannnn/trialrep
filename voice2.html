@@ -1,0 +1,152 @@
+﻿speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pronunciation Practice</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 900px;
+    padding: 40px;
+  }
+
+  .exercise {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    display: flex;
+    gap: 20px;
+  }
+
+  .left {
+    flex: 1;
+  }
+
+  .right {
+    width: 200px;
+    height: 120px;
+    background: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+  }
+
+  button {
+    padding: 8px 14px;
+    font-size: 15px;
+    cursor: pointer;
+    margin-right: 6px;
+  }
+
+  .word {
+    display: inline-block;
+    padding: 4px 8px;
+    margin: 3px;
+    border-radius: 5px;
+  }
+
+  .correct { background: #c8f7c5; }
+  .wrong { background: #f7c5c5; }
+  .extra { background: #f7e3c5; }
+
+  .result {
+    margin-top: 12px;
+    font-size: 16px;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>Pronunciation Practice</h2>
+
+<!-- 1 -->
+<div class="exercise">
+  <div class="left">
+    <p><strong>1. I have a ______.</strong></p>
+    <button onclick="speak('I have a fever')">▶ Play</button>
+    <button onclick="startRecording(1)">🎤 Start Speaking</button>
+    <div class="result" id="result1"></div>
+  </div>
+  <div class="right">Image</div>
+</div>
+
+<!-- 2 -->
+<div class="exercise">
+  <div class="left">
+    <p><strong>2. That’s too bad. You should ______.</strong></p>
+    <button onclick="speak('That’s too bad. You should see the doctor')">▶ Play</button>
+    <button onclick="startRecording(2)">🎤 Start Speaking</button>
+    <div class="result" id="result2"></div>
+  </div>
+  <div class="right">Image</div>
+</div>
+
+<!-- 3 -->
+<div class="exercise">
+  <div class="left">
+    <p><strong>3. How do you feel today?</strong></p>
+    <button onclick="speak('How do you feel today?')">▶ Play</button>
+  </div>
+  <div class="right">Image</div>
+</div>
+
+<!-- 4 -->
+<div class="exercise">
+  <div class="left">
+    <p><strong>4. Much better, thanks.</strong></p>
+    <button onclick="speak('Much better, thanks.')">▶ Play</button>
+  </div>
+  <div class="right">Image</div>
+</div>
+
+<script>
+/* ===== TEXT TO SPEECH ===== */
+function speak(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  utterance.rate = 0.9;   // slower = better for kids
+  utterance.pitch = 1.0;
+
+  speechSynthesis.cancel(); // stop previous speech
+  speechSynthesis.speak(utterance);
+}
+
+/* ===== SPEECH RECOGNITION ===== */
+function startRecording(num) {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Speech Recognition not supported.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+
+  const resultBox = document.getElementById("result" + num);
+  resultBox.innerHTML = "Listening…";
+
+  recognition.start();
+
+  recognition.onresult = (event) => {
+    const spoken = event.results[0][0].transcript.toLowerCase();
+    resultBox.innerHTML = `<p><strong>You said:</strong> "${spoken}"</p>`;
+  };
+
+  recognition.onerror = () => {
+    resultBox.innerHTML = "❌ Error recognising speech.";
+  };
+}
+</script>
+
+</body>
+</html>
