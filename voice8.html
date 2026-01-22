@@ -1,0 +1,276 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Speaking Practice – Health</title>
+
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --primary: #4f6ef7;
+      --primary-dark: #3d58d6;
+      --good-bg: #e6f6ea;
+      --good-text: #1f7a3a;
+      --bad-bg: #fde8e8;
+      --bad-text: #9b1c1c;
+      --chip-bg: #eef1f8;
+      --text: #2d2d2d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: var(--bg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+    }
+
+    h2 {
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+
+    .sentence {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 22px 26px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    }
+
+    .sentence p {
+      font-size: 18px;
+      margin: 0 0 14px 0;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    button.recording {
+      background: #c7c7c7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .output {
+      margin-top: 16px;
+    }
+
+    .word {
+      display: inline-block;
+      padding: 6px 12px;
+      margin: 6px 6px 0 0;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 500;
+      background: var(--chip-bg);
+      user-select: none;
+    }
+
+    .correct {
+      background: var(--good-bg);
+      color: var(--good-text);
+    }
+
+    .wrong {
+      background: var(--bad-bg);
+      color: var(--bad-text);
+    }
+
+    .feedback {
+      margin-top: 14px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .feedback.good {
+      color: var(--good-text);
+    }
+
+    .feedback.try {
+      color: var(--bad-text);
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Speaking Practice</h2>
+
+<div class="sentence">
+  <p><strong>1.</strong> You don't look well. What's wrong?</p>
+  <button onclick="start(1, this)">Start speaking</button>
+  <div id="out1" class="output"></div>
+</div>
+
+<div class="sentence">
+  <p><strong>2.</strong> I have a ______.</p>
+  <button onclick="start(2, this)">Start speaking</button>
+  <div id="out2" class="output"></div>
+</div>
+
+<div class="sentence">
+  <p><strong>3.</strong> That's too bad. You should ______.</p>
+  <button onclick="start(3, this)">Start speaking</button>
+  <div id="out3" class="output"></div>
+</div>
+
+<div class="sentence">
+  <p><strong>4.</strong> How do you feel today?</p>
+  <button onclick="start(4, this)">Start speaking</button>
+  <div id="out4" class="output"></div>
+</div>
+
+<div class="sentence">
+  <p><strong>5.</strong> Much better, thanks!</p>
+  <button onclick="start(5, this)">Start speaking</button>
+  <div id="out5" class="output"></div>
+</div>
+
+<script>
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+
+  const sentences = {
+    1: {
+      base: ['you','dont','look','well','whats','wrong'],
+      phrases: []
+    },
+    2: {
+      base: ['i','have','a'],
+      phrases: [
+        ['toothache'],
+        ['fever'],
+        ['headache'],
+        ['sore','throat'],
+        ['stomach','ache']
+      ]
+    },
+    3: {
+      base: ['thats','too','bad','you','should'],
+      phrases: [
+        ['sleep','well'],
+        ['take','medicine'],
+        ['take','a','rest'],
+        ['see','the','doctor'],
+        ['see','the','dentist'],
+        ['see','the','school','nurse']
+      ]
+    },
+    4: {
+      base: ['how','do','you','feel','today'],
+      phrases: []
+    },
+    5: {
+      base: ['much','better','thanks'],
+      phrases: []
+    }
+  };
+
+  function start(num, btn) {
+    const output = document.getElementById('out' + num);
+    const config = sentences[num];
+
+    btn.textContent = '🎤 Listening...';
+    btn.classList.add('recording');
+    btn.disabled = true;
+
+    recognition.start();
+
+    recognition.onresult = e => {
+      const spoken = e.results[0][0].transcript
+        .toLowerCase()
+        .replace(/[^\w\s]/g,'')
+        .split(' ');
+
+      let result = '';
+      let i = 0;
+      let hasError = false;
+
+      config.base.forEach(word => {
+        if (spoken[i] === word) {
+          result += chip(word, true);
+          i++;
+        } else {
+          result += chip(word, false);
+          hasError = true;
+        }
+      });
+
+      for (const phrase of config.phrases) {
+        let tempIndex = i;
+        let phraseHTML = '';
+        let ok = true;
+
+        for (const w of phrase) {
+          if (spoken[tempIndex] === w) {
+            phraseHTML += chip(w, true);
+            tempIndex++;
+          } else {
+            phraseHTML += chip(w, false);
+            ok = false;
+            hasError = true;
+          }
+        }
+
+        if (ok) {
+          result += phraseHTML;
+          i = tempIndex;
+          break;
+        }
+      }
+
+      for (; i < spoken.length; i++) {
+        result += chip(spoken[i], false);
+        hasError = true;
+      }
+
+      const feedback = hasError
+        ? `<div class="feedback try">Try again.</div>`
+        : `<div class="feedback good">Good job! That’s correct.</div>`;
+
+      output.innerHTML = result + feedback;
+      reset(btn);
+    };
+
+    recognition.onerror = () => {
+      output.innerHTML =
+        chip('Not recognised', false) +
+        `<div class="feedback try">Try again.</div>`;
+      reset(btn);
+    };
+  }
+
+  function chip(word, ok) {
+    return `<span class="word ${ok ? 'correct' : 'wrong'}">${word}</span>`;
+  }
+
+  function reset(btn) {
+    btn.textContent = 'Start speaking';
+    btn.classList.remove('recording');
+    btn.disabled = false;
+  }
+</script>
+
+</body>
+</html>

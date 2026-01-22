@@ -1,0 +1,169 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pronunciation Practice</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 900px;
+    padding: 40px;
+  }
+
+  .exercise {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+  }
+
+  button {
+    padding: 8px 14px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  .result {
+    margin-top: 12px;
+    font-size: 16px;
+  }
+
+  .word {
+    display: inline-block;
+    padding: 4px 7px;
+    margin: 3px;
+    border-radius: 4px;
+  }
+
+  .correct { background: #c8f7c5; }
+  .wrong { background: #f7c5c5; }
+</style>
+</head>
+
+<body>
+
+<h2>Pronunciation Practice – Feeling Sick</h2>
+
+<div class="exercise">
+  <p><strong>A:</strong> You don’t look well. What’s wrong?</p>
+  <button onclick="startRecording(1, models1)">🎤 Start Speaking</button>
+  <div class="result" id="result1"></div>
+</div>
+
+<div class="exercise">
+  <p><strong>B:</strong> I have a __________.</p>
+  <button onclick="startRecording(2, models2)">🎤 Start Speaking</button>
+  <div class="result" id="result2"></div>
+</div>
+
+<div class="exercise">
+  <p><strong>A:</strong> That’s too bad. You should __________.</p>
+  <button onclick="startRecording(3, models3)">🎤 Start Speaking</button>
+  <div class="result" id="result3"></div>
+</div>
+
+<div class="exercise">
+  <p><strong>A:</strong> How do you feel today?</p>
+  <button onclick="startRecording(4, models4)">🎤 Start Speaking</button>
+  <div class="result" id="result4"></div>
+</div>
+
+<div class="exercise">
+  <p><strong>B:</strong> Much better, thanks!</p>
+  <button onclick="startRecording(5, models5)">🎤 Start Speaking</button>
+  <div class="result" id="result5"></div>
+</div>
+
+<script>
+/* ===== MODEL SENTENCES ===== */
+
+const models1 = [
+  "you dont look well whats wrong"
+];
+
+const models2 = [
+  "i have a fever",
+  "i have a sore throat",
+  "i have a stomach ache",
+  "i have a headache",
+  "i have a tooth ache"
+];
+
+const models3 = [
+  "thats too bad you should sleep well",
+  "thats too bad you should see the doctor",
+  "thats too bad you should see the dentist",
+  "thats too bad you should see the school nurse",
+  "thats too bad you should take medicine",
+  "thats too bad you should take a rest"
+];
+
+const models4 = [
+  "how do you feel today"
+];
+
+const models5 = [
+  "much better thanks"
+];
+
+/* ===== SPEECH RECOGNITION ===== */
+
+function normalise(text) {
+  return text
+    .toLowerCase()
+    .replace(/’|'/g, "")
+    .replace(/[?.!,]/g, "")
+    .trim();
+}
+
+function startRecording(num, models) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return alert("Speech recognition not supported");
+
+  const recognition = new SR();
+  recognition.lang = "en-US";
+
+  const box = document.getElementById("result" + num);
+  box.innerHTML = "🎧 Listening…";
+
+  recognition.start();
+
+  recognition.onresult = e => {
+    const spoken = normalise(e.results[0][0].transcript);
+    const spokenWords = spoken.split(" ");
+
+    // Pick best matching model
+    let bestModel = "";
+    let bestScore = -1;
+
+    models.forEach(m => {
+      const mw = normalise(m).split(" ");
+      const score = spokenWords.filter(w => mw.includes(w)).length;
+      if (score > bestScore) {
+        bestScore = score;
+        bestModel = mw;
+      }
+    });
+
+    let html = "<strong>You said:</strong><br>";
+
+    spokenWords.forEach(w => {
+      if (bestModel.includes(w)) {
+        html += `<span class="word correct">${w}</span>`;
+      } else {
+        html += `<span class="word wrong">${w}</span>`;
+      }
+    });
+
+    box.innerHTML = html;
+  };
+
+  recognition.onerror = () => {
+    box.innerHTML = "❌ Error recognising speech.";
+  };
+}
+</script>
+
+</body>
+</html>

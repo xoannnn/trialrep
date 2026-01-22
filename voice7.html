@@ -1,0 +1,210 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Speaking Practice – Health</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      max-width: 900px;
+    }
+
+    .sentence {
+      margin-bottom: 35px;
+    }
+
+    button {
+      padding: 8px 14px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button.recording {
+      background: #ffe0e0;
+      cursor: not-allowed;
+    }
+
+    .output {
+      margin-top: 12px;
+    }
+
+    .word {
+      display: inline-block;
+      padding: 6px 10px;
+      margin: 4px;
+      border-radius: 14px;
+      font-size: 16px;
+      user-select: none;
+    }
+
+    .correct {
+      background: #c8f7c5;
+      color: #1d6b1d;
+    }
+
+    .wrong {
+      background: #f7c5c5;
+      color: #7a1d1d;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Speaking Practice</h2>
+
+<div class="sentence">
+  <p><strong>1.</strong> You don't look well. What's wrong?</p>
+  <button onclick="start(1, this)">Start speaking</button>
+  <div id="out1" class="output"></div>
+</div>
+
+<div class="sentence">
+  <p><strong>2.</strong> I have a ______.</p>
+  <button onclick="start(2, this)">Start speaking</button>
+  <div id="out2" class="output"></div>
+</div>
+
+<div class="sentence">
+  <p><strong>3.</strong> That's too bad. You should ______.</p>
+  <button onclick="start(3, this)">Start speaking</button>
+  <div id="out3" class="output"></div>
+</div>
+
+<div class="sentence">
+  <p><strong>4.</strong> How do you feel today?</p>
+  <button onclick="start(4, this)">Start speaking</button>
+  <div id="out4" class="output"></div>
+</div>
+
+<div class="sentence">
+  <p><strong>5.</strong> Much better, thanks!</p>
+  <button onclick="start(5, this)">Start speaking</button>
+  <div id="out5" class="output"></div>
+</div>
+
+<script>
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+
+  const sentences = {
+    1: {
+      base: ['you','dont','look','well','whats','wrong'],
+      phrases: []
+    },
+    2: {
+      base: ['i','have','a'],
+      phrases: [
+        ['toothache'],
+        ['fever'],
+        ['headache'],
+        ['sore','throat'],
+        ['stomach','ache']
+      ]
+    },
+    3: {
+      base: ['thats','too','bad','you','should'],
+      phrases: [
+        ['sleep','well'],
+        ['take','medicine'],
+        ['take','a','rest'],
+        ['see','the','doctor'],
+        ['see','the','dentist'],
+        ['see','the','school','nurse']
+      ]
+    },
+    4: {
+      base: ['how','do','you','feel','today'],
+      phrases: []
+    },
+    5: {
+      base: ['much','better','thanks'],
+      phrases: []
+    }
+  };
+
+  function start(num, btn) {
+    const output = document.getElementById('out' + num);
+    const config = sentences[num];
+
+    btn.textContent = '🎤 Listening...';
+    btn.classList.add('recording');
+    btn.disabled = true;
+
+    recognition.start();
+
+    recognition.onresult = e => {
+      const spoken = e.results[0][0].transcript
+        .toLowerCase()
+        .replace(/[^\w\s]/g,'')
+        .split(' ');
+
+      let result = '';
+      let i = 0;
+
+      // Base sentence
+      config.base.forEach(word => {
+        if (spoken[i] === word) {
+          result += chip(word, true);
+          i++;
+        } else {
+          result += chip(word, false);
+        }
+      });
+
+      // Phrase matching (STRICT, including "the")
+      let matched = false;
+
+      for (const phrase of config.phrases) {
+        let tempIndex = i;
+        let phraseHTML = '';
+        let ok = true;
+
+        for (const w of phrase) {
+          if (spoken[tempIndex] === w) {
+            phraseHTML += chip(w, true);
+            tempIndex++;
+          } else {
+            phraseHTML += chip(w, false);
+            ok = false;
+          }
+        }
+
+        if (ok) {
+          result += phraseHTML;
+          i = tempIndex;
+          matched = true;
+          break;
+        }
+      }
+
+      // Remaining spoken words
+      for (; i < spoken.length; i++) {
+        result += chip(spoken[i], false);
+      }
+
+      output.innerHTML = result;
+      reset(btn);
+    };
+
+    recognition.onerror = () => {
+      output.innerHTML = chip('Not recognised', false);
+      reset(btn);
+    };
+  }
+
+  function chip(word, ok) {
+    return `<span class="word ${ok ? 'correct' : 'wrong'}">${word}</span>`;
+  }
+
+  function reset(btn) {
+    btn.textContent = 'Start speaking';
+    btn.classList.remove('recording');
+    btn.disabled = false;
+  }
+</script>
+
+</body>
+</html>
