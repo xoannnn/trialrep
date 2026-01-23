@@ -12,9 +12,8 @@
   .result-btn { padding: 5px 10px; margin-left: 10px; border: none; border-radius: 4px; color: white; }
   .correct { background-color: #4CAF50; }
   .wrong { background-color: #f44336; }
-  .spoken { font-style: italic; margin-left: 10px; color: #333; }
-  .error { color: red; margin-top: 15px; }
   .status { font-weight: bold; margin-left: 10px; color: #007BFF; }
+  .error { color: red; margin-top: 15px; }
 </style>
 </head>
 <body>
@@ -56,15 +55,14 @@ function generateList() {
     div.className = 'word-item';
     div.innerHTML = `
       ${index+1}. ${word} 
-      <button onclick="startSpeaking('${word}', this)">Start Speaking</button>
+      <button id="btn-${index}" onclick="startSpeaking('${word}', ${index})">Start Speaking</button>
       <span class="status" id="status-${index}"></span>
-      <span class="spoken" id="spoken-${index}"></span>
     `;
     wordListDiv.appendChild(div);
   });
 }
 
-function startSpeaking(word, btn) {
+function startSpeaking(word, index) {
   const errorDiv = document.getElementById('errorMsg');
   errorDiv.textContent = '';
 
@@ -79,41 +77,40 @@ function startSpeaking(word, btn) {
     return;
   }
 
-  const index = Array.from(btn.parentNode.parentNode.children).indexOf(btn.parentNode);
   const statusSpan = document.getElementById(`status-${index}`);
-  const spokenSpan = document.getElementById(`spoken-${index}`);
+  const btn = document.getElementById(`btn-${index}`);
 
   const recognition = new SpeechRecognition();
   recognition.lang = 'en-US';
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
-  statusSpan.textContent = 'Recording...';
-  spokenSpan.textContent = '';
+  // Update status to show listening
+  statusSpan.textContent = 'Listening...';
 
   recognition.start();
 
   recognition.onresult = function(event) {
+    // Update status to analyzing
     statusSpan.textContent = 'Analyzing...';
 
     const spoken = event.results[0][0].transcript.trim();
     const spokenLower = spoken.toLowerCase();
     const expected = word.toLowerCase();
 
-    spokenSpan.textContent = `You said: "${spoken}"`;
-
     const resultBtn = document.createElement('button');
     resultBtn.className = 'result-btn';
-    resultBtn.textContent = word;
 
     if(spokenLower === expected){
       resultBtn.classList.add('correct');
+      resultBtn.textContent = word; // green button = correct word
     } else {
       resultBtn.classList.add('wrong');
+      resultBtn.textContent = spoken; // red button = what was actually said
     }
 
     btn.parentNode.appendChild(resultBtn);
-    statusSpan.textContent = ''; // clear status after done
+    statusSpan.textContent = ''; // clear status after result
   }
 
   recognition.onspeechend = function() {
