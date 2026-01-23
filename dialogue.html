@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WhatsApp-Style Dialog Practice</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body {
+    font-family: 'Nunito', Arial, sans-serif;
+    padding: 20px;
+    max-width: 700px;
+    margin: auto;
+    background: #e5ddd5;
+}
+h2 { text-align: center; color: #075e54; margin-bottom: 20px; }
+input[type=text] { width: 95%; padding: 10px; margin: 5px 0; border-radius: 12px; border: 1px solid #ccc; font-size: 16px; }
+button {
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: transform 0.1s ease;
+}
+button:hover { transform: scale(1.05); }
+.chat-container { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; max-height: 500px; overflow-y: auto; }
+.message { max-width: 70%; padding: 12px; border-radius: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 16px; word-wrap: break-word; }
+.student { align-self: flex-end; background-color: #34b7f1; color: #fff; border-bottom-right-radius: 4px; display: flex; align-items: center; justify-content: space-between; }
+.computer { align-self: flex-start; background-color: #dcf8c6; color: #000; border-bottom-left-radius: 4px; }
+.feedback { font-weight: bold; font-size: 14px; margin-left: 10px; }
+.great { color: #43a047; }
+.try { color: #e53935; }
+.start-btn { background-color: #ffca28; color: #fff; border-radius: 12px; margin-left: 10px; }
+.prompt-text { flex: 1; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h2>🎤 WhatsApp-Style Dialog Pronunciation</h2>
+
+<p>Enter 4 sentences for the dialog:</p>
+<div id="sentenceInputs">
+  <input type="text" id="sentence0" placeholder="Sentence 1 (Student reads)">
+  <input type="text" id="sentence1" placeholder="Sentence 2 (Computer responds)"><br>
+  <input type="text" id="sentence2" placeholder="Sentence 3 (Student reads)">
+  <input type="text" id="sentence3" placeholder="Sentence 4 (Computer responds)">
+</div>
+<button style="background-color:#075e54; color:#fff;" onclick="startDialog()">Start Dialog</button>
+
+<div id="chat" class="chat-container"></div>
+
+<script>
+// Levenshtein distance for fuzzy matching
+function levenshtein(a, b) {
+  const dp = Array(a.length+1).fill(null).map(()=>Array(b.length+1).fill(0));
+  for(let i=0;i<=a.length;i++) dp[i][0]=i;
+  for(let j=0;j<=b.length;j++) dp[0][j]=j;
+  for(let i=1;i<=a.length;i++){
+    for(let j=1;j<=b.length;j++){
+      if(a[i-1]===b[j-1]) dp[i][j]=dp[i-1][j-1];
+      else dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+1);
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+// Typing effect for computer
+function typeComputerResponse(element, text, speed=50){
+  element.textContent = "";
+  let i = 0;
+  const interval = setInterval(()=>{
+    element.textContent += text[i];
+    i++;
+    if(i>=text.length) clearInterval(interval);
+    element.scrollIntoView({behavior:"smooth", block:"end"});
+  }, speed);
+}
+
+let currentIndex = 0;
+let sentences = [];
+
+function startDialog(){
+  const chatDiv = document.getElementById("chat");
+  chatDiv.innerHTML="";
+  sentences=[];
+  for(let i=0;i<4;i++){
+    const s=document.getElementById(`sentence${i}`).value.trim();
+    if(!s){ alert("Please enter all 4 sentences."); return; }
+    sentences.push(s);
+  }
+  currentIndex=0;
+  showNext();
+}
+
+function showNext(){
+  const chatDiv = document.getElementById("chat");
+  if(currentIndex >= sentences.length) return;
+
+  if(currentIndex % 2 === 0){
+    // Student prompt + button
+    const studentDiv = document.createElement("div");
+    studentDiv.className="message student";
+
+    const promptSpan = document.createElement("span");
+    promptSpan.className="prompt-text";
+    promptSpan.textContent = sentences[currentIndex];
+
+    const speakBtn = document.createElement("button");
+    speakBtn.className="start-btn";
+    speakBtn.textContent="🎧 Start Speaking";
+
+    studentDiv.appendChild(promptSpan);
+    studentDiv.appendChild(speakBtn);
+    chatDiv.appendChild(studentDiv);
+    studentDiv.scrollIntoView({behavior:"smooth"});
+
+    speakBtn.onclick = ()=> startSpeaking(sentences[currentIndex], currentIndex, studentDiv, speakBtn);
+  } else {
+    // Computer response
+    const compDiv = document.createElement("div");
+    compDiv.className="message computer";
+    chatDiv.appendChild(compDiv);
+    typeComputerResponse(compDiv, sentences[currentIndex]);
+    currentIndex++;
+    setTimeout(showNext, sentences[currentIndex-1].length*50+300);
+  }
+}
+
+function startSpeaking(expected,index,studentDiv,btn){
+  btn.disabled = true;
+  const status = document.createElement("span");
+  status.className="feedback";
+  status.textContent="🎤 Listening...";
+  studentDiv.appendChild(status);
+
+  const recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!recognition){
+    status.textContent="Speech Recognition not supported.";
+    return;
+  }
+  const rec = new recognition();
+  rec.lang='en-US';
+  rec.interimResults=false;
+  rec.maxAlternatives=3;
+
+  rec.onresult=(event)=>{
+    status.textContent="🔎 Analyzing...";
+    let transcript = event.results[0][0].transcript.trim().toLowerCase().replace(/'/g,"");
+    const expectedClean = expected.toLowerCase().replace(/'/g,"");
+    const distance = levenshtein(transcript,expectedClean);
+    const correct = distance <= 3;
+
+    const feedback = document.createElement("span");
+    feedback.className="feedback";
+
+    if(correct){
+      feedback.textContent="🌟 Great job!";
+      feedback.classList.add("great");
+      // Replace prompt with bubble text only
+      studentDiv.innerHTML = "";
+      const bubble = document.createElement("div");
+      bubble.textContent=expected;
+      studentDiv.appendChild(bubble);
+      studentDiv.className="message student";
+      studentDiv.scrollIntoView({behavior:"smooth"});
+      currentIndex++;
+      showNext();
+    } else {
+      feedback.textContent="⚠️ Try again!";
+      feedback.classList.add("try");
+      btn.disabled=false;
+    }
+    studentDiv.appendChild(feedback);
+  };
+
+  rec.onerror = (event)=>{ status.textContent="Error: "+event.error; };
+  rec.start();
+}
+</script>
+</body>
+</html>
