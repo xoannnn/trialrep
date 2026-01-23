@@ -2,34 +2,78 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Kid-Friendly Pronunciation Checker</title>
+<title>Pronunciation Fun!</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 <style>
   body {
-    font-family: 'Comic Sans MS', Arial;
-    padding: 40px;
-    max-width: 600px;
-    background: #f0f8ff;
+    font-family: 'Nunito', Arial, sans-serif;
+    padding: 30px;
+    max-width: 650px;
+    margin: auto;
+    background: linear-gradient(to bottom, #e0f7fa, #ffffff);
   }
-  h2 { text-align: center; }
-  input[type=text] { width: 80%; padding: 8px; margin: 5px 0; border-radius: 8px; border: 1px solid #ccc; }
-  button { padding: 10px 12px; margin: 5px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; }
-  .word-item {
-    background: #e6f2ff;
-    padding: 12px;
+  h2 {
+    text-align: center;
+    color: #00796b;
+    margin-bottom: 20px;
+  }
+  p { color: #004d40; font-weight: 600; }
+  input[type=text] {
+    width: 80%;
+    padding: 10px;
+    margin: 5px 0;
     border-radius: 12px;
-    margin-bottom: 12px;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    border: 1px solid #b2dfdb;
+    font-size: 16px;
   }
-  .start-btn { background-color: #ffa500; color: white; }
-  .result-btn { padding: 6px 10px; margin-left: 5px; border-radius: 8px; color: white; font-weight: bold; border: none; font-size: 14px; }
-  .correct { background-color: #4CAF50; }
-  .wrong { background-color: #f44336; }
-  .status { font-weight: bold; margin-left: 10px; color: #007BFF; }
+  button {
+    padding: 10px 16px;
+    margin: 5px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: transform 0.1s ease;
+  }
+  button:hover { transform: scale(1.05); }
+  .word-item {
+    background: #b2ebf2;
+    padding: 14px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+  }
+  .start-btn { background-color: #ffca28; color: #fff; }
+  .result-btn {
+    padding: 8px 12px;
+    margin-left: 6px;
+    border-radius: 12px;
+    color: white;
+    font-weight: bold;
+    border: none;
+    font-size: 14px;
+  }
+  .correct { background-color: #43a047; }
+  .wrong { background-color: #e53935; }
+  .status {
+    font-weight: bold;
+    margin-left: 10px;
+    color: #0288d1;
+    font-size: 15px;
+  }
+  .feedback {
+    font-weight: bold;
+    margin-left: 10px;
+    font-size: 16px;
+  }
+  .great { color: #43a047; }
+  .try { color: #e53935; }
 </style>
 </head>
 <body>
 
-<h2>Pronunciation Checker</h2>
+<h2>🎤 Pronunciation Fun! 🎶</h2>
 
 <p>Enter 5 words you want to practice:</p>
 <div id="wordInputs">
@@ -39,7 +83,7 @@
   <input type="text" id="word3" placeholder="Word 4"><br>
   <input type="text" id="word4" placeholder="Word 5">
 </div>
-<button onclick="generateWords()">Start Practice</button>
+<button style="background-color:#00796b; color:#fff;" onclick="generateWords()">Start Practice</button>
 
 <div id="wordList"></div>
 
@@ -60,13 +104,12 @@ function levenshtein(a, b) {
 
 function generateWords(){
   const wordListDiv = document.getElementById("wordList");
-  wordListDiv.innerHTML = ""; // clear previous
+  wordListDiv.innerHTML = "";
   const words = [];
   for(let i=0;i<5;i++){
     const w = document.getElementById(`word${i}`).value.trim();
     if(w) words.push(w);
   }
-
   if(words.length === 0){
     alert("Please enter at least 1 word.");
     return;
@@ -77,8 +120,9 @@ function generateWords(){
     div.className="word-item";
     div.innerHTML=`
       <strong>${index+1}. ${word}</strong>
-      <button class="start-btn" id="btn-${index}" onclick="startSpeaking('${word}',${index})">Start Speaking</button>
+      <button class="start-btn" id="btn-${index}" onclick="startSpeaking('${word}',${index})">🎧 Start Speaking</button>
       <span class="status" id="status-${index}"></span>
+      <span class="feedback" id="feedback-${index}"></span>
     `;
     wordListDiv.appendChild(div);
   });
@@ -86,9 +130,10 @@ function generateWords(){
 
 function startSpeaking(expectedWord,index){
   const status = document.getElementById(`status-${index}`);
-  status.textContent = "Listening...";
+  const feedback = document.getElementById(`feedback-${index}`);
+  status.textContent = "🎤 Listening...";
+  feedback.textContent = "";
 
-  // Remove previous result button
   const parent = document.getElementById(`btn-${index}`).parentNode;
   parent.querySelectorAll(".result-btn").forEach(btn=>btn.remove());
 
@@ -99,29 +144,31 @@ function startSpeaking(expectedWord,index){
   }
 
   const recognition = new SpeechRecognition();
-  recognition.lang = 'en-US'; // can be changed to help Japanese students pronounce
+  recognition.lang = 'en-US';
   recognition.interimResults = false;
   recognition.maxAlternatives = 3;
 
-  recognition.onstart = ()=>{ status.textContent="Listening..."; };
+  recognition.onstart = ()=>{ status.textContent="🎤 Listening..."; };
   recognition.onresult = (event)=>{
-    status.textContent="Analyzing...";
-    // Take the best alternative
+    status.textContent="🔎 Analyzing...";
     let transcript = event.results[0][0].transcript.trim().toLowerCase();
     const expected = expectedWord.toLowerCase();
 
-    // Fuzzy match
     const distance = levenshtein(transcript,expected);
-    let correct = distance <= 1; // allows small mispronunciations
+    let correct = distance <= 1;
 
     const resultBtn = document.createElement("button");
     resultBtn.className="result-btn";
     if(correct){
       resultBtn.classList.add("correct");
       resultBtn.textContent = expectedWord;
+      feedback.textContent = "🌟 Great job!";
+      feedback.className = "feedback great";
     } else {
       resultBtn.classList.add("wrong");
       resultBtn.textContent = transcript;
+      feedback.textContent = "⚠️ Try again!";
+      feedback.className = "feedback try";
     }
     parent.appendChild(resultBtn);
     status.textContent="";
@@ -129,6 +176,7 @@ function startSpeaking(expectedWord,index){
 
   recognition.onerror = (event)=>{
     status.textContent = "Error: " + event.error;
+    feedback.textContent="";
   };
 
   recognition.start();
