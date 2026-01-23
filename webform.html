@@ -5,13 +5,15 @@
 <title>Pronunciation Checker</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 40px; max-width: 600px; }
-  input { padding: 5px; margin: 5px 0; width: 100%; }
+  input { padding: 8px; margin: 5px 0; width: 100%; }
   button { padding: 8px 12px; margin-left: 10px; cursor: pointer; }
   .word-list { margin-top: 20px; }
   .word-item { margin-bottom: 15px; }
   .result-btn { padding: 5px 10px; margin-left: 10px; border: none; border-radius: 4px; color: white; }
   .correct { background-color: #4CAF50; }
   .wrong { background-color: #f44336; }
+  .spoken { font-style: italic; margin-left: 10px; color: #333; }
+  .error { color: red; margin-top: 15px; }
 </style>
 </head>
 <body>
@@ -28,60 +30,85 @@
 <button onclick="generateList()">Generate List</button>
 
 <div class="word-list" id="wordList"></div>
+<div class="error" id="errorMsg"></div>
 
 <script>
-  function generateList() {
-    const wordListDiv = document.getElementById('wordList');
-    wordListDiv.innerHTML = ''; // clear previous list
-    const words = [];
-    for(let i=1; i<=5; i++){
-      const val = document.getElementById('word'+i).value.trim();
-      if(val) words.push(val);
-    }
+function generateList() {
+  const wordListDiv = document.getElementById('wordList');
+  const errorDiv = document.getElementById('errorMsg');
+  errorDiv.textContent = '';
+  wordListDiv.innerHTML = '';
 
-    words.forEach((word, index) => {
-      const div = document.createElement('div');
-      div.className = 'word-item';
-      div.innerHTML = `${index+1}. ${word} <button onclick="startSpeaking('${word}', this)">Start Speaking</button>`;
-      wordListDiv.appendChild(div);
-    });
+  const words = [];
+  for(let i=1; i<=5; i++){
+    const val = document.getElementById('word'+i).value.trim();
+    if(val) words.push(val);
   }
 
-  function startSpeaking(word, btn) {
-    // Check if browser supports SpeechRecognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SpeechRecognition){
-      alert("Your browser does not support Speech Recognition.");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.start();
-
-    recognition.onresult = function(event) {
-      const spoken = event.results[0][0].transcript.trim().toLowerCase();
-      const expected = word.toLowerCase();
-      const resultBtn = document.createElement('button');
-      resultBtn.className = 'result-btn';
-      resultBtn.textContent = word;
-
-      if(spoken === expected){
-        resultBtn.classList.add('correct');
-      } else {
-        resultBtn.classList.add('wrong');
-      }
-
-      btn.parentNode.appendChild(resultBtn);
-    }
-
-    recognition.onerror = function(event){
-      alert('Error occurred in recognition: ' + event.error);
-    }
+  if(words.length === 0){
+    alert("Please enter at least one word.");
+    return;
   }
+
+  words.forEach((word, index) => {
+    const div = document.createElement('div');
+    div.className = 'word-item';
+    div.innerHTML = `
+      ${index+1}. ${word} 
+      <button onclick="startSpeaking('${word}', this)">Start Speaking</button>
+      <span class="spoken" id="spoken-${index}"></span>
+    `;
+    wordListDiv.appendChild(div);
+  });
+}
+
+function startSpeaking(word, btn) {
+  const errorDiv = document.getElementById('errorMsg');
+  errorDiv.textContent = '';
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    errorDiv.textContent = "Your browser does not support Speech Recognition. Use Chrome or Edge.";
+    return;
+  }
+
+  if(location.protocol !== 'https:' && location.hostname !== 'localhost'){
+    errorDiv.textContent = "Microphone access requires HTTPS or localhost.";
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.start();
+
+  recognition.onresult = function(event) {
+    const spoken = event.results[0][0].transcript.trim();
+    const spokenLower = spoken.toLowerCase();
+    const expected = word.toLowerCase();
+
+    // Show spoken text
+    const index = Array.from(btn.parentNode.parentNode.children).indexOf(btn.parentNode);
+    document.getElementById(`spoken-${index}`).textContent = `You said: "${spoken}"`;
+
+    // Add result button
+    const resultBtn = document.createElement('button');
+    resultBtn.className = 'result-btn';
+    resultBtn.textContent = word;
+    if(spokenLower === expected){
+      resultBtn.classList.add('correct');
+    } else {
+      resultBtn.classList.add('wrong');
+    }
+    btn.parentNode.appendChild(resultBtn);
+  }
+
+  recognition.onerror = function(event){
+    errorDiv.textContent = 'Error occurred in recognition: ' + event.error;
+  }
+}
 </script>
 
 </body>
