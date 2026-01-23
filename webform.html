@@ -4,22 +4,91 @@
 <meta charset="UTF-8">
 <title>Pronunciation Checker</title>
 <style>
-  body { font-family: Arial, sans-serif; padding: 40px; max-width: 600px; }
-  input { padding: 8px; margin: 5px 0; width: 100%; }
-  button { padding: 8px 12px; margin-left: 10px; cursor: pointer; }
-  .word-list { margin-top: 20px; }
-  .word-item { margin-bottom: 15px; }
-  .result-btn { padding: 5px 10px; margin-left: 10px; border: none; border-radius: 4px; color: white; }
+  body { 
+    font-family: 'Comic Sans MS', Arial, sans-serif; 
+    padding: 40px; 
+    max-width: 650px; 
+    background-color: #f0f8ff;
+    color: #333;
+  }
+
+  h2 { text-align: center; color: #007BFF; }
+  p { text-align: center; }
+
+  input { 
+    padding: 10px; 
+    margin: 5px 0; 
+    width: 100%; 
+    border: 2px solid #007BFF; 
+    border-radius: 8px; 
+    font-size: 16px;
+  }
+
+  button { 
+    padding: 10px 15px; 
+    cursor: pointer; 
+    font-size: 16px; 
+    border-radius: 8px; 
+    border: none;
+  }
+
+  .generate-btn {
+    background-color: #007BFF;
+    color: white;
+    margin-top: 10px;
+    display: block;
+    width: 100%;
+  }
+
+  .word-list { margin-top: 25px; }
+
+  .word-item { 
+    background-color: #e6f2ff; 
+    padding: 15px; 
+    border-radius: 12px; 
+    margin-bottom: 15px; 
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  }
+
+  .start-btn {
+    background-color: #ffa500; 
+    color: white; 
+    margin-top: 10px;
+  }
+
+  .result-btn { 
+    padding: 8px 12px; 
+    margin-left: 5px; 
+    border: none; 
+    border-radius: 8px; 
+    color: white; 
+    font-weight: bold;
+  }
+
   .correct { background-color: #4CAF50; }
   .wrong { background-color: #f44336; }
-  .status { font-weight: bold; margin-left: 10px; color: #007BFF; }
-  .error { color: red; margin-top: 15px; }
+
+  .status { 
+    display: inline-block; 
+    font-weight: bold; 
+    margin-left: 10px; 
+    color: #007BFF; 
+    font-size: 14px;
+  }
+
+  .error { 
+    color: red; 
+    margin-top: 15px; 
+    font-weight: bold;
+    text-align: center;
+  }
+
 </style>
 </head>
 <body>
 
 <h2>Pronunciation Checker</h2>
-<p>Enter up to 5 words:</p>
+<p>Enter up to 5 words and click "Generate List"</p>
 <div id="inputs">
   <input type="text" id="word1" placeholder="Word 1">
   <input type="text" id="word2" placeholder="Word 2">
@@ -27,17 +96,20 @@
   <input type="text" id="word4" placeholder="Word 4">
   <input type="text" id="word5" placeholder="Word 5">
 </div>
-<button onclick="generateList()">Generate List</button>
+<button class="generate-btn" onclick="generateList()">Generate List</button>
 
 <div class="word-list" id="wordList"></div>
 <div class="error" id="errorMsg"></div>
 
 <script>
+let recognitions = {}; // store active recognitions per word index
+
 function generateList() {
   const wordListDiv = document.getElementById('wordList');
   const errorDiv = document.getElementById('errorMsg');
   errorDiv.textContent = '';
   wordListDiv.innerHTML = '';
+  recognitions = {}; // reset all recognitions
 
   const words = [];
   for(let i=1; i<=5; i++){
@@ -54,8 +126,8 @@ function generateList() {
     const div = document.createElement('div');
     div.className = 'word-item';
     div.innerHTML = `
-      ${index+1}. ${word} 
-      <button id="btn-${index}" onclick="startSpeaking('${word}', ${index})">Start Speaking</button>
+      <div><strong>${index+1}. ${word}</strong></div>
+      <button class="start-btn" id="btn-${index}" onclick="startSpeaking('${word}', ${index})">Start Speaking</button>
       <span class="status" id="status-${index}"></span>
     `;
     wordListDiv.appendChild(div);
@@ -77,21 +149,31 @@ function startSpeaking(word, index) {
     return;
   }
 
-  const statusSpan = document.getElementById(`status-${index}`);
   const btn = document.getElementById(`btn-${index}`);
+  const statusSpan = document.getElementById(`status-${index}`);
+
+  // Stop previous recognition if it exists
+  if(recognitions[index]){
+    recognitions[index].abort();
+    recognitions[index] = null;
+  }
+
+  // Remove previous result buttons for this word
+  const parent = btn.parentNode;
+  Array.from(parent.querySelectorAll('.result-btn')).forEach(el => el.remove());
 
   const recognition = new SpeechRecognition();
   recognition.lang = 'en-US';
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
-  // Update status to show listening
+  recognitions[index] = recognition; // store active recognition
+
   statusSpan.textContent = 'Listening...';
 
   recognition.start();
 
   recognition.onresult = function(event) {
-    // Update status to analyzing
     statusSpan.textContent = 'Analyzing...';
 
     const spoken = event.results[0][0].transcript.trim();
@@ -103,14 +185,15 @@ function startSpeaking(word, index) {
 
     if(spokenLower === expected){
       resultBtn.classList.add('correct');
-      resultBtn.textContent = word; // green button = correct word
+      resultBtn.textContent = word; // green = correct
     } else {
       resultBtn.classList.add('wrong');
-      resultBtn.textContent = spoken; // red button = what was actually said
+      resultBtn.textContent = spoken; // red = what was actually said
     }
 
-    btn.parentNode.appendChild(resultBtn);
-    statusSpan.textContent = ''; // clear status after result
+    parent.appendChild(resultBtn);
+    statusSpan.textContent = ''; // clear status
+    recognitions[index] = null; // clear recognition reference
   }
 
   recognition.onspeechend = function() {
@@ -120,6 +203,7 @@ function startSpeaking(word, index) {
   recognition.onerror = function(event){
     errorDiv.textContent = 'Error occurred in recognition: ' + event.error;
     statusSpan.textContent = '';
+    recognitions[index] = null;
   }
 }
 </script>
