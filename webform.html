@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pronunciation Checker</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 40px; max-width: 600px; }
+  input { padding: 5px; margin: 5px 0; width: 100%; }
+  button { padding: 8px 12px; margin-left: 10px; cursor: pointer; }
+  .word-list { margin-top: 20px; }
+  .word-item { margin-bottom: 15px; }
+  .result-btn { padding: 5px 10px; margin-left: 10px; border: none; border-radius: 4px; color: white; }
+  .correct { background-color: #4CAF50; }
+  .wrong { background-color: #f44336; }
+</style>
+</head>
+<body>
+
+<h2>Pronunciation Checker</h2>
+<p>Enter up to 5 words:</p>
+<div id="inputs">
+  <input type="text" id="word1" placeholder="Word 1">
+  <input type="text" id="word2" placeholder="Word 2">
+  <input type="text" id="word3" placeholder="Word 3">
+  <input type="text" id="word4" placeholder="Word 4">
+  <input type="text" id="word5" placeholder="Word 5">
+</div>
+<button onclick="generateList()">Generate List</button>
+
+<div class="word-list" id="wordList"></div>
+
+<script>
+  function generateList() {
+    const wordListDiv = document.getElementById('wordList');
+    wordListDiv.innerHTML = ''; // clear previous list
+    const words = [];
+    for(let i=1; i<=5; i++){
+      const val = document.getElementById('word'+i).value.trim();
+      if(val) words.push(val);
+    }
+
+    words.forEach((word, index) => {
+      const div = document.createElement('div');
+      div.className = 'word-item';
+      div.innerHTML = `${index+1}. ${word} <button onclick="startSpeaking('${word}', this)">Start Speaking</button>`;
+      wordListDiv.appendChild(div);
+    });
+  }
+
+  function startSpeaking(word, btn) {
+    // Check if browser supports SpeechRecognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SpeechRecognition){
+      alert("Your browser does not support Speech Recognition.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.start();
+
+    recognition.onresult = function(event) {
+      const spoken = event.results[0][0].transcript.trim().toLowerCase();
+      const expected = word.toLowerCase();
+      const resultBtn = document.createElement('button');
+      resultBtn.className = 'result-btn';
+      resultBtn.textContent = word;
+
+      if(spoken === expected){
+        resultBtn.classList.add('correct');
+      } else {
+        resultBtn.classList.add('wrong');
+      }
+
+      btn.parentNode.appendChild(resultBtn);
+    }
+
+    recognition.onerror = function(event){
+      alert('Error occurred in recognition: ' + event.error);
+    }
+  }
+</script>
+
+</body>
+</html>
