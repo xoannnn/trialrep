@@ -1,0 +1,139 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Kid-Friendly Pronunciation Checker</title>
+<style>
+  body {
+    font-family: 'Comic Sans MS', Arial;
+    padding: 40px;
+    max-width: 600px;
+    background: #f0f8ff;
+  }
+  h2 { text-align: center; }
+  .word-item {
+    background: #e6f2ff;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  }
+  .start-btn {
+    background-color: #ffa500;
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .result-btn {
+    padding: 8px 12px;
+    margin-left: 5px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    border: none;
+    font-size: 14px;
+  }
+  .correct { background-color: #4CAF50; }
+  .wrong { background-color: #f44336; }
+  .status { font-weight: bold; margin-left: 10px; color: #007BFF; }
+</style>
+</head>
+<body>
+
+<h2>Pronunciation Checker</h2>
+<div id="wordList"></div>
+
+<script>
+const words = ["apple","banana","grape","orange","pear"]; // Example words
+const wordListDiv = document.getElementById("wordList");
+
+// Add words to the page
+words.forEach((word,index)=>{
+  const div = document.createElement("div");
+  div.className="word-item";
+  div.innerHTML=`
+    <strong>${index+1}. ${word}</strong>
+    <button class="start-btn" id="btn-${index}" onclick="startSpeaking('${word}',${index})">Start Speaking</button>
+    <span class="status" id="status-${index}"></span>
+  `;
+  wordListDiv.appendChild(div);
+});
+
+// Function to calculate Levenshtein distance (fuzzy match)
+function levenshtein(a, b) {
+  const dp = Array(a.length+1).fill(null).map(()=>Array(b.length+1).fill(0));
+  for(let i=0;i<=a.length;i++) dp[i][0]=i;
+  for(let j=0;j<=b.length;j++) dp[0][j]=j;
+  for(let i=1;i<=a.length;i++){
+    for(let j=1;j<=b.length;j++){
+      if(a[i-1]===b[j-1]) dp[i][j]=dp[i-1][j-1];
+      else dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+1);
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+function startSpeaking(expectedWord,index){
+  const status = document.getElementById(`status-${index}`);
+  status.textContent = "Listening...";
+
+  // Remove previous result button
+  const parent = document.getElementById(`btn-${index}`).parentNode;
+  parent.querySelectorAll(".result-btn").forEach(btn=>btn.remove());
+
+  // Check browser support
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    status.textContent="Speech Recognition not supported in your browser.";
+    return;
+  }
+
+  // Create recognition
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 3;
+
+  recognition.onstart = ()=>{
+    status.textContent="Listening...";
+  };
+
+  recognition.onresult = (event)=>{
+    status.textContent="Analyzing...";
+    const transcript = event.results[0][0].transcript.trim().toLowerCase();
+    const expected = expectedWord.toLowerCase();
+
+    let correct=false;
+    const distance = levenshtein(transcript,expected);
+    if(distance <=1) correct=true; // fuzzy match allows small mispronunciation
+
+    const resultBtn = document.createElement("button");
+    resultBtn.className="result-btn";
+    if(correct){
+      resultBtn.classList.add("correct");
+      resultBtn.textContent=expectedWord;
+    } else {
+      resultBtn.classList.add("wrong");
+      resultBtn.textContent=transcript;
+    }
+    parent.appendChild(resultBtn);
+    status.textContent="";
+  };
+
+  recognition.onerror = (event)=>{
+    status.textContent = "Error: " + event.error;
+  };
+
+  recognition.onend = ()=>{
+    // automatically stops listening, can restart by clicking button again
+  };
+
+  recognition.start();
+}
+</script>
+
+</body>
+</html>
