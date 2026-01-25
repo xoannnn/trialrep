@@ -1,0 +1,392 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Interviewee Practice</title>
+
+<style>
+  /* ===== BODY ===== */
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #89f7fe, #66a6ff);
+    padding: 20px;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  /* ===== APP CONTAINER ===== */
+  .app {
+    max-width: 480px;
+    margin: auto;
+  }
+
+  h1 {
+    text-align: center;
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 25px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: #ffffffee;
+    border-radius: 20px;
+    padding: 22px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 35px rgba(0,0,0,0.2);
+  }
+
+  .sentence {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #333;
+  }
+
+  /* ===== BUTTONS ===== */
+  button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 14px;
+    font-size: 16px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ff758c, #ff7eb3);
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  button:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+
+  /* ===== RECORDING INDICATOR ===== */
+  .recording {
+    margin-top: 10px;
+    text-align: center;
+    color: #e74c3c;
+    font-weight: bold;
+    display: none;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+  }
+
+  /* ===== WORDS ===== */
+  .words {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .word {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    pointer-events: none;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.2s;
+  }
+
+  .correct {
+    background: #c2f0c2;
+    color: #2c662d;
+    box-shadow: 0 2px 6px rgba(44,102,45,0.3);
+  }
+
+  .wrong {
+    background: #f7c2c2;
+    color: #7a1f1f;
+    box-shadow: 0 2px 6px rgba(122,31,31,0.3);
+  }
+
+  /* ===== JOB / PHRASE LISTS ===== */
+  .job-list, .phrase-list {
+    margin-top: 14px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .job-item, .phrase-item {
+    font-size: 13px;
+    background: #f0f0f0;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-weight: 500;
+    color: #555;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    transition: transform 0.15s;
+  }
+
+  .job-item:hover, .phrase-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <h1>🗣 Interviewee</h1>
+  <div id="app"></div>
+</div>
+
+<script>
+/* ===== JS LOGIC (UNCHANGED) ===== */
+const countries = [
+  "germany","united kingdom","england","japan","united states","usa",
+  "hong kong","colombia","italy","portugal"
+];
+
+const countryDisplay = {
+  "germany": "Germany",
+  "united kingdom": "United Kingdom",
+  "england": "England",
+  "japan": "Japan",
+  "united states": "United States",
+  "usa": "USA",
+  "hong kong": "Hong Kong",
+  "colombia": "Colombia",
+  "italy": "Italy",
+  "portugal": "Portugal"
+};
+
+function normaliseCountry(input) {
+  let text = input.replace(/\./g, "").replace(/\s+/g, " ").trim();
+  if (text === "u s a") return "usa";
+  return text;
+}
+
+const jobs = [
+  "baseball player","hero","football player","basketball player","plumber",
+  "detective","singer","dancer","youtuber","actor","engineer","actress",
+  "figure skater","skater","adventurer","scientist"
+];
+
+const phrases3 = [
+  "explore old places","think about ideas","act in movies","practice skating",
+  "build rockets and cars","practice kung fu","make videos",
+  "practice singing and dancing","practice singing","solve mysteries",
+  "fix pipes","practice basketball","practice football","train",
+  "practice baseball"
+];
+
+const phrases4 = [
+  "catch criminals","control my power","jump over enemies","perform jumps",
+  "memorize lines","solve problems","fight enemies","score goals",
+  "memorize long scripts","hit home runs","launch rockets successfully",
+  "do dangerous stunts","plan big challenges","dance and sing at the same time",
+  "write new songs","score under pressure"
+];
+
+const adjectives6 = [
+  "funny","hardworking","determined","cheerful","brave","happy","kind",
+  "nervous","smart","curious","strong","confident","energetic","focused",
+  "adventurous","creative","serious"
+];
+
+const items = [
+  { display: "I am from ____________", expected: "i am from" },
+  { display: "I am __________", expected: "i am a teacher" },
+  { display: "Every day, I __________", expected: "every day i work" },
+  { display: "It is difficult to ___________", expected: "it is difficult to wake up early" },
+  { display: "It is funny to ___________", expected: "it is funny to dance alone" },
+  { display: "I am _____ and _____", expected: "i am happy and funny" }
+];
+
+const app = document.getElementById("app");
+
+items.forEach((item, index) => {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const sentenceDiv = document.createElement("div");
+  sentenceDiv.className = "sentence";
+  sentenceDiv.textContent = `${index + 1}. ${item.display}`;
+
+  const btn = document.createElement("button");
+  btn.textContent = "Start Speaking";
+
+  const indicator = document.createElement("div");
+  indicator.className = "recording";
+  indicator.textContent = "🎙 Recording...";
+
+  const wordsDiv = document.createElement("div");
+  wordsDiv.className = "words";
+
+  card.appendChild(sentenceDiv);
+
+  if(index === 1){
+    const jobListDiv = document.createElement("div");
+    jobListDiv.className = "job-list";
+    jobs.forEach(job=>{
+      const article = /^[aeiou]/i.test(job) ? "an" : "a";
+      const jobItem = document.createElement("div");
+      jobItem.className="job-item";
+      jobItem.textContent = `${article} ${job}`;
+      jobListDiv.appendChild(jobItem);
+    });
+    card.appendChild(jobListDiv);
+  }
+
+  if(index === 2){
+    const phraseListDiv = document.createElement("div");
+    phraseListDiv.className = "phrase-list";
+    phrases3.forEach(phrase=>{
+      const phraseItem = document.createElement("div");
+      phraseItem.className="phrase-item";
+      phraseItem.textContent=phrase;
+      phraseListDiv.appendChild(phraseItem);
+    });
+    card.appendChild(phraseListDiv);
+  }
+
+  if(index === 3){
+    const phraseListDiv = document.createElement("div");
+    phraseListDiv.className = "phrase-list";
+    phrases4.forEach(phrase=>{
+      const phraseItem = document.createElement("div");
+      phraseItem.className="phrase-item";
+      phraseItem.textContent=phrase;
+      phraseListDiv.appendChild(phraseItem);
+    });
+    card.appendChild(phraseListDiv);
+  }
+
+  if(index === 5){
+    const adjListDiv = document.createElement("div");
+    adjListDiv.className = "phrase-list";
+    adjListDiv.style.justifyContent = "center";
+    adjectives6.forEach(adj=>{
+      const adjItem = document.createElement("div");
+      adjItem.className="phrase-item";
+      adjItem.textContent=adj;
+      adjListDiv.appendChild(adjItem);
+    });
+    card.appendChild(adjListDiv);
+  }
+
+  card.appendChild(btn);
+  card.appendChild(indicator);
+  card.appendChild(wordsDiv);
+
+  app.appendChild(card);
+
+  btn.onclick = () => startRecognition(item, index, wordsDiv, indicator);
+});
+
+function startRecognition(item, index, container, indicator) {
+  container.innerHTML = "";
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) { alert("Speech recognition not supported."); return; }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+
+  indicator.style.display = "block";
+  recognition.start();
+
+  recognition.onresult = (event) => {
+    indicator.style.display = "none";
+    const spoken = event.results[0][0].transcript.toLowerCase().replace(/[^\w\s]/g, "").trim();
+    const spokenWords = spoken.split(" ");
+
+    // ===== All logic unchanged =====
+    if(index === 0){
+      const baseWords = ["i","am","from"];
+      baseWords.forEach((word,i)=>{
+        const span = document.createElement("span");
+        span.className = "word";
+        span.textContent = word==="i"?"I":word;
+        span.classList.add(spokenWords[i]===word?"correct":"wrong");
+        container.appendChild(span);
+      });
+      const rawCountry = spokenWords.slice(3).join(" ");
+      const normalisedCountry = normaliseCountry(rawCountry);
+      const countrySpan = document.createElement("span");
+      countrySpan.className = "word";
+      if(countries.includes(normalisedCountry)){
+        countrySpan.textContent = countryDisplay[normalisedCountry];
+        countrySpan.classList.add("correct");
+      }else{
+        countrySpan.textContent = rawCountry ? rawCountry.charAt(0).toUpperCase() + rawCountry.slice(1) : "________";
+        countrySpan.classList.add("wrong");
+      }
+      container.appendChild(countrySpan);
+      return;
+    }
+
+    if(index === 1){
+      const article = spokenWords[2]==="an" || spokenWords[2]==="a" ? spokenWords[2] : "";
+      const jobSpoken = spokenWords.slice(3).join(" ");
+      const span1 = document.createElement("span"); span1.className="word"; span1.textContent="I"; span1.classList.add(spokenWords[0]==="i"?"correct":"wrong"); container.appendChild(span1);
+      const span2 = document.createElement("span"); span2.className="word"; span2.textContent="am"; span2.classList.add(spokenWords[1]==="am"?"correct":"wrong"); container.appendChild(span2);
+      const span3 = document.createElement("span"); span3.className="word"; span3.textContent=article; span3.classList.add(["a","an"].includes(article)?"correct":"wrong"); container.appendChild(span3);
+      const span4 = document.createElement("span"); span4.className="word"; if(jobs.includes(jobSpoken)){span4.textContent=jobSpoken; span4.classList.add("correct");}else{span4.textContent=jobSpoken || "________"; span4.classList.add("wrong");} container.appendChild(span4);
+      return;
+    }
+
+    if(index === 2){
+      let iOffset = 0;
+      if(spokenWords[0] === "everyday"){ iOffset = 1; } else if(spokenWords[0] === "every" && spokenWords[1] === "day"){ iOffset = 2; }
+      const spanEvery = document.createElement("span"); spanEvery.className = "word"; spanEvery.textContent = "Every"; spanEvery.classList.add("correct"); container.appendChild(spanEvery);
+      const spanDay = document.createElement("span"); spanDay.className = "word"; spanDay.textContent = "day"; spanDay.classList.add("correct"); container.appendChild(spanDay);
+      const spanI = document.createElement("span"); spanI.className = "word"; spanI.textContent = "I"; spanI.classList.add(spokenWords[iOffset]==="i"?"correct":"wrong"); container.appendChild(spanI);
+      iOffset++;
+      const phraseSpoken = spokenWords.slice(iOffset).join(" ");
+      const spanPhrase = document.createElement("span"); spanPhrase.className = "word"; if(phrases3.includes(phraseSpoken)){spanPhrase.textContent = phraseSpoken; spanPhrase.classList.add("correct");} else {spanPhrase.textContent = phraseSpoken || "________"; spanPhrase.classList.add("wrong");} container.appendChild(spanPhrase);
+      return;
+    }
+
+    if(index === 3){
+      const baseSentence = ["It","is","difficult","to"];
+      baseSentence.forEach((word,i)=>{ const span = document.createElement("span"); span.className="word"; span.textContent = word; span.classList.add(spokenWords[i]===word.toLowerCase() ? "correct":"wrong"); container.appendChild(span); });
+      const phraseSpoken = spokenWords.slice(4).join(" ");
+      const spanPhrase = document.createElement("span"); spanPhrase.className="word"; if(phrases4.includes(phraseSpoken)){spanPhrase.textContent = phraseSpoken; spanPhrase.classList.add("correct");} else {spanPhrase.textContent = phraseSpoken || "________"; spanPhrase.classList.add("wrong");} container.appendChild(spanPhrase);
+      return;
+    }
+
+    if(index === 5){
+      const spanI = document.createElement("span"); spanI.className="word"; spanI.textContent="I"; spanI.classList.add(spokenWords[0]==="i"?"correct":"wrong"); container.appendChild(spanI);
+      const spanAm = document.createElement("span"); spanAm.className="word"; spanAm.textContent="am"; spanAm.classList.add(spokenWords[1]==="am"?"correct":"wrong"); container.appendChild(spanAm);
+      const adj1 = spokenWords[2] || "";
+      const spanAdj1 = document.createElement("span"); spanAdj1.className="word"; spanAdj1.textContent = adjectives6.includes(adj1) ? adj1 : (adj1 || "________"); spanAdj1.classList.add(adjectives6.includes(adj1) ? "correct":"wrong"); container.appendChild(spanAdj1);
+      const spanAnd = document.createElement("span"); spanAnd.className="word"; spanAnd.textContent="and"; spanAnd.classList.add(spokenWords[3]==="and"?"correct":"wrong"); container.appendChild(spanAnd);
+      const adj2 = spokenWords[4] || "";
+      const spanAdj2 = document.createElement("span"); spanAdj2.className="word"; spanAdj2.textContent = adjectives6.includes(adj2) ? adj2 : (adj2 || "________"); spanAdj2.classList.add(adjectives6.includes(adj2) ? "correct":"wrong"); container.appendChild(spanAdj2);
+      return;
+    }
+
+    const expectedWords = item.expected.split(" ");
+    expectedWords.forEach((expected, i) => {
+      const span = document.createElement("span");
+      span.className = "word";
+      const displayWord = expected==="i"?"I":expected;
+      if(spokenWords[i]===expected){ span.textContent = displayWord; span.classList.add("correct"); }
+      else{ span.textContent = spokenWords[i] || displayWord; span.classList.add("wrong"); }
+      container.appendChild(span);
+    });
+  };
+
+  recognition.onend = () => { indicator.style.display = "none"; };
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Interviewer Practice</title>
+
+<style>
+  body {
+    font-family: system-ui, Arial, sans-serif;
+    background: linear-gradient(135deg, #4f8cff, #6fc3ff);
+    padding: 20px;
+    margin: 0;
+  }
+
+  .app {
+    max-width: 420px;
+    margin: auto;
+  }
+
+  h1 {
+    text-align: center;
+    color: white;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  }
+
+  .sentence {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px;
+    font-size: 16px;
+    border: none;
+    border-radius: 12px;
+    background: #4f8cff;
+    color: white;
+    cursor: pointer;
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
+
+  .recording {
+    margin-top: 10px;
+    text-align: center;
+    color: red;
+    font-weight: bold;
+    display: none;
+  }
+
+  .words {
+    margin-top: 14px;
+  }
+
+  .word {
+    display: inline-block;
+    padding: 6px 10px;
+    margin: 4px 4px 0 0;
+    border-radius: 8px;
+    background: #eee;
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  .correct {
+    background: #b6f2b6;
+  }
+
+  .wrong {
+    background: #f4b6b6;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <h1>🎤 Interviewer</h1>
+  <div id="app"></div>
+</div>
+
+<script>
+const sentences = [
+  "where are you from",
+  "what is your job",
+  "what do you do every day",
+  "what is difficult in your job",
+];
+
+const app = document.getElementById("app");
+
+sentences.forEach((sentence, index) => {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const sentenceDiv = document.createElement("div");
+  sentenceDiv.className = "sentence";
+  sentenceDiv.textContent = `${index + 1}. ${sentence}`;
+
+  const btn = document.createElement("button");
+  btn.textContent = "Start Speaking";
+
+  const indicator = document.createElement("div");
+  indicator.className = "recording";
+  indicator.textContent = "🎙 Recording...";
+
+  const wordsDiv = document.createElement("div");
+  wordsDiv.className = "words";
+
+  card.appendChild(sentenceDiv);
+  card.appendChild(btn);
+  card.appendChild(indicator);
+  card.appendChild(wordsDiv);
+  app.appendChild(card);
+
+  const expectedWords = sentence.split(" ");
+
+  btn.onclick = () => startRecognition(expectedWords, wordsDiv, indicator);
+});
+
+function startRecognition(expectedWords, container, indicator) {
+  container.innerHTML = "";
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("Speech recognition not supported.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+
+  indicator.style.display = "block";
+  recognition.start();
+
+  recognition.onresult = (event) => {
+    indicator.style.display = "none";
+
+    const spokenWords = event.results[0][0].transcript
+      .toLowerCase()
+      .replace(/[^\w\s]/g, "")
+      .split(" ");
+
+    expectedWords.forEach((expected, i) => {
+      const span = document.createElement("span");
+      span.className = "word";
+
+      if (spokenWords[i] === expected) {
+        span.textContent = expected;
+        span.classList.add("correct");
+      } else if (spokenWords[i]) {
+        span.textContent = spokenWords[i];
+        span.classList.add("wrong");
+      } else {
+        span.textContent = expected;
+        span.classList.add("wrong");
+      }
+
+      container.appendChild(span);
+    });
+  };
+
+  recognition.onend = () => {
+    indicator.style.display = "none";
+  };
+}
+</script>
+
+</body>
+</html>
