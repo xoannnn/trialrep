@@ -33,20 +33,22 @@ button:hover { transform: scale(1.05); }
 .try { color: #e53935; }
 .start-btn { background-color: #ffca28; color: #fff; border-radius: 12px; margin-left: 10px; }
 .prompt-text { flex: 1; font-weight: bold; }
+#sentenceInputs br { line-height: 1.5; }
 </style>
 </head>
 <body>
 
 <h2>🎤 WhatsApp-Style Dialog Pronunciation</h2>
 
-<p>Enter 4 sentences for the dialog:</p>
+<p>Enter sentences for the dialog:</p>
 <div id="sentenceInputs">
   <input type="text" id="sentence0" placeholder="Sentence 1 (Student reads)">
   <input type="text" id="sentence1" placeholder="Sentence 2 (Computer responds)"><br>
   <input type="text" id="sentence2" placeholder="Sentence 3 (Student reads)">
   <input type="text" id="sentence3" placeholder="Sentence 4 (Computer responds)">
 </div>
-<button style="background-color:#075e54; color:#fff;" onclick="startDialog()">Start Dialog</button>
+<button style="margin-top:5px;" onclick="addSentence()">+ Add Sentence</button>
+<button style="margin-top:10px; background-color:#075e54; color:#fff;" onclick="startDialog()">Start Dialog</button>
 
 <div id="chat" class="chat-container"></div>
 
@@ -79,17 +81,29 @@ function typeComputerResponse(element, text, speed=50){
 
 let currentIndex = 0;
 let sentences = [];
+let sentenceCount = 4; // tracks dynamic inputs
+
+function addSentence(){
+  const container = document.getElementById("sentenceInputs");
+  const input = document.createElement("input");
+  input.type = "text";
+  input.id = "sentence" + sentenceCount;
+  input.placeholder = "Sentence " + (sentenceCount + 1);
+  container.appendChild(document.createElement("br"));
+  container.appendChild(input);
+  sentenceCount++;
+}
 
 function startDialog(){
   const chatDiv = document.getElementById("chat");
   chatDiv.innerHTML="";
-  sentences=[];
-  for(let i=0;i<4;i++){
-    const s=document.getElementById(`sentence${i}`).value.trim();
-    if(!s){ alert("Please enter all 4 sentences."); return; }
+  sentences = [];
+  for(let i=0;i<sentenceCount;i++){
+    const s = document.getElementById(`sentence${i}`).value.trim();
+    if(!s){ alert("Please fill all sentence fields."); return; }
     sentences.push(s);
   }
-  currentIndex=0;
+  currentIndex = 0;
   showNext();
 }
 
