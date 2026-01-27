@@ -1,0 +1,385 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>I'm sick</title>
+<style>
+/* Body: space theme */
+body {
+    font-family: "Nunito", Arial, sans-serif;
+    background: radial-gradient(circle at 50% 50%, #0b0c2a, #02020d); /* dark space */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    color: white;
+    overflow-x: hidden;
+}
+
+/* Chat box: futuristic panel */
+#chatBox {
+    width: 90%;
+    max-width: 600px;
+    background: rgba(20, 20, 40, 0.8);
+    border-radius: 25px;
+    padding: 25px;
+    box-shadow: 0 0 20px #00f0ff, 0 0 40px #ff00ff;
+    border: 2px solid #00f0ff;
+}
+
+/* Chat bubbles: glowing neon */
+.sentence.A { 
+    align-self: flex-start; 
+    text-align: left; 
+    background: linear-gradient(135deg, #1a1aff, #00ffff);
+    color: #fff;
+    box-shadow: 0 0 10px #1a1aff, 0 0 20px #00ffff;
+}
+.sentence.B { 
+    align-self: flex-end; 
+    text-align: right; 
+    background: linear-gradient(135deg, #ff1a75, #ff80ff);
+    color: #fff;
+    box-shadow: 0 0 10px #ff1a75, 0 0 20px #ff80ff;
+}
+
+/* Hover effect: pulse */
+.sentence:hover { transform: scale(1.05); transition: transform 0.2s; }
+
+/* Word buttons: neon style */
+.wordBtn {
+    margin: 4px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: default;
+    background: #222;
+    color: #fff;
+    box-shadow: 0 0 5px #0ff, 0 0 10px #f0f;
+}
+.correct { background: #00ff88; box-shadow: 0 0 10px #00ff88; color: #000; }
+.wrong { background: #ff4444; box-shadow: 0 0 10px #ff4444; color: #fff; }
+
+/* Record button: glowing */
+button.record {
+    font-size: 16px;
+    padding: 8px 16px;
+    border-radius: 15px;
+    border: none;
+    cursor: pointer;
+    background: #ff00ff;
+    color: white;
+    margin-left: 10px;
+    margin-top: 6px;
+    box-shadow: 0 0 10px #ff00ff, 0 0 20px #ff80ff;
+    transition: 0.2s all;
+}
+button.record:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px #ff00ff, 0 0 30px #ff80ff;
+}
+
+/* Scoreboard: futuristic neon panel */
+#scoreBox {
+    position: fixed;
+    top: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 30px;
+    background: rgba(0,0,40,0.9);
+    border-bottom: 3px solid #0ff;
+    box-shadow: 0 0 15px #0ff, 0 0 30px #f0f;
+    color: #0ff;
+    font-weight: bold;
+    font-size: 22px;
+    border-radius: 0 0 25px 25px;
+    z-index: 9999;
+}
+
+/* Neon text */
+#nameDisplay {
+    text-align: left;
+    color: #ff80ff;
+    text-shadow: 0 0 5px #ff80ff, 0 0 10px #ff00ff;
+}
+#score {
+    font-size: 22px;
+    color: #00ffff;
+    text-shadow: 0 0 5px #00ffff, 0 0 10px #0ff;
+}
+#total {
+    font-size: 22px;
+    color: #00ffff;
+}
+
+/* Feedback */
+#feedback {
+    margin-top: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Fireworks canvas */
+canvas#fireworks {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10000;
+    pointer-events: none;
+}
+
+/* Score popup: glowing */
+#scorePopup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    background: rgba(10,10,30,0.95);
+    color: #fff;
+    padding: 50px 70px;
+    border-radius: 25px;
+    text-align: center;
+    box-shadow: 0 0 20px #0ff, 0 0 40px #f0f;
+    z-index: 10001;
+}
+#scorePopup button {
+    margin-top: 25px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    background: #ff00ff;
+    color: white;
+    box-shadow: 0 0 10px #ff00ff, 0 0 20px #ff80ff;
+}
+
+/* Perfect score text: exploding neon */
+#perfectText {
+    font-size: 36px;
+    font-weight: bold;
+    color: #00ff00;
+    text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0;
+    margin-bottom: 20px;
+    display: none;
+}
+
+/* Optional: animated stars in background */
+body::after {
+    content:"";
+    position:fixed;
+    width:200%;
+    height:200%;
+    top:-50%;
+    left:-50%;
+    background:transparent;
+    box-shadow:
+        100px 150px #fff,
+        400px 500px #fff,
+        800px 200px #fff,
+        1200px 800px #fff,
+        1500px 300px #fff,
+        200px 900px #fff,
+        1700px 400px #fff;
+    animation: twinkle 3s linear infinite;
+}
+@keyframes twinkle {
+    0%, 100% {opacity:1;}
+    50% {opacity:0.5;}
+}
+</style>
+</head>
+<body>
+
+<h2 style="font-size:32px; color:#fff; text-shadow: 0 0 5px #0ff, 0 0 10px #ff0;">I'm sick!</h2>
+
+<div id="chatBox"></div>
+
+<div id="scoreBox">
+  <div id="nameDisplay"></div>
+  <div>Score: <span id="score">0</span>/<span id="total">0</span></div>
+</div>
+
+<canvas id="fireworks"></canvas>
+
+<div id="scorePopup">
+  <div id="perfectText">PERFECT SCORE!</div>
+  <div id="popupText" style="font-size:26px; font-weight:bold;"></div>
+  <button onclick="document.getElementById('scorePopup').style.display='none'">Close</button>
+</div>
+
+<script>
+let voices = [];
+let totalScore = 0;
+let userName = "";
+
+speechSynthesis.onvoiceschanged = () => { voices = speechSynthesis.getVoices(); };
+
+// Ask for name
+userName = prompt("Enter your name:");
+document.getElementById("nameDisplay").textContent = userName;
+
+const chatBox = document.getElementById("chatBox");
+
+function addSentence(speaker, text) {
+  const box = document.createElement("div");
+  box.className = `sentence ${speaker}`;
+
+  const p = document.createElement("div");
+  p.className = "sentenceText";
+  p.textContent = `${speaker}: ${text}`;
+
+  const record = document.createElement("button");
+  record.className = "record";
+  record.textContent = "🎤 Check";
+
+  const result = document.createElement("div");
+  result.className = "result";
+
+  const feedback = document.createElement("div");
+  feedback.className = "feedback";
+
+  box.append(p, record, result, feedback);
+  chatBox.appendChild(box);
+
+  const scored = new Set();
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = "en-US";
+
+  record.onclick = () => {
+    record.textContent = "🔴 LISTENING…";
+    rec.start();
+  };
+
+  rec.onresult = e => {
+    record.textContent = "🎤 Check";
+    result.innerHTML = "";
+    feedback.textContent = "";
+
+    const spoken = e.results[0][0].transcript
+      .toLowerCase().replace(/[^\w\s]/g,"").split(/\s+/);
+    const target = text
+      .toLowerCase().replace(/[^\w\s]/g,"").split(/\s+/);
+
+    let allCorrect = true;
+
+    target.forEach((w,i) => {
+      const b = document.createElement("button");
+      b.disabled = true;
+      b.className = "wordBtn";
+      b.textContent = w;
+
+      if (spoken[i] === w) {
+        b.classList.add("correct");
+        if (!scored.has(i)) {
+          scored.add(i);
+          totalScore++;
+          document.getElementById("score").textContent = totalScore;
+        }
+      } else {
+        b.classList.add("wrong");
+        allCorrect = false;
+      }
+      result.appendChild(b);
+    });
+
+    feedback.textContent = allCorrect ? "Good job!" : "Try again";
+
+    const totalWords = parseInt(document.getElementById("total").textContent);
+    if ([...document.querySelectorAll(".result")].every(r=>r.children.length>0)) {
+      // show popup
+      const popup = document.getElementById("scorePopup");
+      document.getElementById("popupText").textContent =
+        `Name: ${userName}\nScore: ${totalScore}/${totalWords}`;
+      popup.style.display = "block";
+
+      if(totalScore === totalWords){
+        document.getElementById("perfectText").style.display = "block";
+        showFireworks();
+      } else {
+        document.getElementById("perfectText").style.display = "none";
+      }
+    }
+  };
+
+  rec.onerror = () => record.textContent = "🎤 Check";
+}
+
+// Fireworks animation
+function showFireworks() {
+  const canvas = document.getElementById("fireworks");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext("2d");
+  const particles = [];
+
+  for(let i=0;i<200;i++){
+    particles.push({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      r: Math.random()*4+1,
+      dx: (Math.random()-0.5)*10,
+      dy: (Math.random()-0.5)*10,
+      color:`hsl(${Math.random()*360},100%,50%)`,
+      alpha:1
+    });
+  }
+
+  let duration = 0;
+  function animate(){
+    ctx.fillStyle='rgba(0,0,0,0.08)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.color;
+      ctx.globalAlpha=p.alpha;
+      ctx.fill();
+      p.x+=p.dx;
+      p.y+=p.dy;
+      p.alpha -= 0.008;
+    });
+    duration++;
+    if(duration<250){
+      requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+  }
+  animate();
+}
+
+// Initialize dialogue
+function initDialogue() {
+  chatBox.innerHTML = "";
+  totalScore = 0;
+  document.getElementById("score").textContent = 0;
+
+  const dialogue = [
+    {speaker:"A", text:"What’s wrong?"},
+    {speaker:"B", text:"I’m sick. I have a fever."},
+    {speaker:"A", text:"Oh no! You should take some medicine."},
+    {speaker:"B", text:"Okay, thank you!"},
+    {speaker:"A", text:"Get better soon!"},
+    {speaker:"B", text:"Yeah, thanks."}
+  ];
+
+  const total = dialogue.reduce((s,l)=>
+    s + l.text.toLowerCase().replace(/[^\w\s]/g,"").split(/\s+/).length
+  ,0);
+  document.getElementById("total").textContent = total;
+
+  dialogue.forEach(d => addSentence(d.speaker, d.text));
+}
+
+initDialogue();
+</script>
+</body>
+</html>

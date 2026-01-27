@@ -1,0 +1,258 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>I'm sick</title>
+<style>
+  body {
+    font-family: system-ui, Arial, sans-serif;
+    background: #e5ddd5;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  button.main {
+    font-size: 18px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: none;
+    background: #4a90e2;
+    color: white;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+
+  button.replay, button.record {
+    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 15px;
+    border: none;
+    cursor: pointer;
+    margin-top: 5px;
+  }
+
+  button.replay {
+    background: #888;
+    color: white;
+  }
+
+  button.record {
+    background: #2196f3;
+    color: white;
+    margin-left: 5px;
+    min-width: 160px;
+  }
+
+  #chatBox {
+    width: 90%;
+    max-width: 500px;
+    min-height: 300px;
+    background: #f0f0f0;
+    border-radius: 15px;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .message {
+    max-width: 70%;
+    margin: 5px 0;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-size: 16px;
+    opacity: 0.6;
+  }
+
+  .message.active { opacity: 1; }
+
+  .A { align-self: flex-start; background: #fff; color: #000; border-top-left-radius: 0; }
+  .B { align-self: flex-end; background: #4fc3f7; color: #fff; border-top-right-radius: 0; }
+
+  .controlsContainer {
+    display: flex;
+    width: 100%;
+    margin-bottom: 5px;
+  }
+  .controlsContainer.left { justify-content: flex-start; }
+  .controlsContainer.right { justify-content: flex-end; }
+
+  .result { margin-left: 10px; }
+
+  .wordBtn {
+    margin-left: 5px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+  }
+
+  .correct { background: #4caf50; color: white; }
+  .wrong { background: #f44336; color: white; }
+
+  #scoreBox {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: white;
+    padding: 20px 30px;
+    border-radius: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    font-weight: bold;
+    font-size: 26px;
+    z-index: 9999;
+  }
+</style>
+</head>
+<body>
+
+<h2>I'm sick!</h2>
+<button class="main" onclick="playDialogue()">▶ Play Conversation</button>
+
+<div id="chatBox"></div>
+<div id="scoreBox">Score: <span id="score">0</span>/<span id="total">0</span></div>
+
+<script>
+let voices = [];
+let totalScore = 0;
+let totalItems = 0;
+
+speechSynthesis.onvoiceschanged = () => {
+  voices = speechSynthesis.getVoices();
+};
+
+function speak(text, voice, rate, pitch) {
+  return new Promise(resolve => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.voice = voice;
+    u.rate = rate;
+    u.pitch = pitch;
+    u.onend = resolve;
+    speechSynthesis.speak(u);
+  });
+}
+
+function pause(s) { return new Promise(r => setTimeout(r, s * 1000)); }
+
+function typeText(el, txt, spd) {
+  return new Promise(res => {
+    el.textContent = "";
+    let i = 0;
+    const iv = setInterval(() => {
+      el.textContent += txt[i++];
+      if (i >= txt.length) { clearInterval(iv); res(); }
+    }, spd);
+  });
+}
+
+function addMessageBubble(spk) {
+  const d = document.createElement("div");
+  d.classList.add("message", spk);
+  chatBox.appendChild(d);
+  return d;
+}
+
+function addControls(speaker, text, voice, rate, pitch) {
+  const container = document.createElement("div");
+  container.classList.add("controlsContainer", speaker === "A" ? "left" : "right");
+
+  const replay = document.createElement("button");
+  replay.className = "replay";
+  replay.textContent = "▶";
+  replay.onclick = () => speak(text, voice, rate, pitch);
+
+  const record = document.createElement("button");
+  record.className = "record";
+  record.textContent = "CHECK PRONUNCIATION";
+
+  const result = document.createElement("span");
+  result.className = "result";
+
+  container.append(replay, record, result);
+  chatBox.appendChild(container);
+
+  const scored = new Set();
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = "en-US";
+
+  record.onclick = () => {
+    record.textContent = "🔴 LISTENING…";
+    rec.start();
+  };
+
+  rec.onresult = e => {
+    record.textContent = "CHECK PRONUNCIATION";
+    result.innerHTML = "";
+
+    const spoken = e.results[0][0].transcript
+      .toLowerCase().replace(/[^\w\s]/g,"").split(/\s+/);
+    const target = text
+      .toLowerCase().replace(/[^\w\s]/g,"").split(/\s+/);
+
+    target.forEach((w,i) => {
+      const b = document.createElement("button");
+      b.disabled = true;
+      b.className = "wordBtn";
+      b.textContent = w;
+
+      if (spoken[i] === w) {
+        b.classList.add("correct");
+        if (!scored.has(i)) {
+          scored.add(i);
+          totalScore++;
+          document.getElementById("score").textContent = totalScore;
+        }
+      } else {
+        b.classList.add("wrong");
+      }
+      result.appendChild(b);
+    });
+  };
+
+  rec.onerror = () => {
+    record.textContent = "CHECK PRONUNCIATION";
+  };
+}
+
+async function playDialogue() {
+  chatBox.innerHTML = "";
+  totalScore = 0;
+  document.getElementById("score").textContent = 0;
+
+  const voiceA = voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("female")) || voices[0];
+  const voiceB = voices.find(v => v.lang.startsWith("en") && !v.name.toLowerCase().includes("female")) || voices[1] || voices[0];
+
+  const dialogue = [
+    {speaker:"A", text:"What’s wrong?", voice:voiceA, rate:0.95, pitch:1.1, pause:1.5},
+    {speaker:"B", text:"I’m sick. I have a fever.", voice:voiceB, rate:0.9, pitch:0.9, pause:1.5},
+    {speaker:"A", text:"Oh no! You should take some medicine.", voice:voiceA, rate:0.95, pitch:1.1, pause:1},
+    {speaker:"B", text:"Okay, thank you!", voice:voiceB, rate:0.9, pitch:0.9, pause:1},
+    {speaker:"A", text:"Get better soon!", voice:voiceA, rate:0.95, pitch:1.1, pause:0.5},
+    {speaker:"B", text:"Yeah, thanks.", voice:voiceB, rate:0.9, pitch:0.9, pause:0}
+  ];
+
+  totalItems = dialogue.reduce((s,l) =>
+    s + l.text.toLowerCase().replace(/[^\w\s]/g,"").split(/\s+/).length
+  ,0);
+
+  document.getElementById("total").textContent = totalItems;
+
+  for (const l of dialogue) {
+    const b = addMessageBubble(l.speaker);
+    b.classList.add("active");
+    await Promise.all([
+      typeText(b, l.text, 40),
+      speak(l.text, l.voice, l.rate, l.pitch)
+    ]);
+    b.classList.remove("active");
+    await pause(l.pause);
+    addControls(l.speaker, l.text, l.voice, l.rate, l.pitch);
+  }
+}
+</script>
+
+</body>
+</html>

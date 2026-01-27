@@ -1,0 +1,369 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>I'm sick</title>
+<style>
+/* Body: friendly hospital theme */
+body {
+    font-family: "Nunito", Arial, sans-serif;
+    background: #f0f8ff; /* light blue hospital feel */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    color: #333;
+}
+
+/* Chat box: clean panel */
+#chatBox {
+    width: 90%;
+    max-width: 600px;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    border: 2px solid #b3d9ff;
+}
+
+/* Chat bubbles: friendly rounded colors */
+.sentence.A { 
+    align-self: flex-start; 
+    text-align: left; 
+    background: #d0f0fd; 
+    color: #333;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+.sentence.B { 
+    align-self: flex-end; 
+    text-align: right; 
+    background: #ffd6d6; 
+    color: #333;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+/* Hover effect: small lift */
+.sentence:hover { transform: translateY(-2px); transition: transform 0.2s; }
+
+/* Word buttons: soft colored */
+.wordBtn {
+    margin: 4px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: default;
+    background: #eee;
+    color: #333;
+}
+.correct { background: #90ee90; color: #000; }
+.wrong { background: #ff7f7f; color: #000; }
+
+/* Record button: fun friendly style */
+button.record {
+    font-size: 16px;
+    padding: 8px 16px;
+    border-radius: 15px;
+    border: none;
+    cursor: pointer;
+    background: #4da6ff;
+    color: white;
+    margin-left: 10px;
+    margin-top: 6px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+button.record:hover {
+    background: #3399ff;
+}
+
+/* Scoreboard: hospital board style */
+#scoreBox {
+    position: fixed;
+    top: 10px;
+    width: 95%;
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: #e6f2ff;
+    border: 2px solid #99ccff;
+    border-radius: 15px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    font-weight: bold;
+    font-size: 20px;
+    color: #333;
+    z-index: 9999;
+}
+
+/* Name and score text */
+#nameDisplay {
+    text-align: left;
+    font-size: 20px;
+    color: #0073e6;
+}
+#score {
+    font-size: 20px;
+    color: #339933;
+}
+#total {
+    font-size: 20px;
+    color: #339933;
+}
+
+/* Feedback text */
+#feedback {
+    margin-top: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Fireworks canvas: subtle confetti colors */
+canvas#fireworks {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10000;
+    pointer-events: none;
+}
+
+/* Score popup: clean friendly style */
+#scorePopup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    background: #ffffff;
+    color: #333;
+    padding: 40px 60px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    z-index: 10001;
+}
+#scorePopup button {
+    margin-top: 20px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    background: #4da6ff;
+    color: white;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+#scorePopup button:hover { background: #3399ff; }
+
+/* Perfect score text */
+#perfectText {
+    font-size: 32px;
+    font-weight: bold;
+    color: #ff9933;
+    margin-bottom: 15px;
+    display: none;
+    text-shadow: 1px 1px 2px #ffa64d;
+}
+
+/* Optional: subtle background elements */
+body::before {
+    content:"";
+    position:fixed;
+    width:100%;
+    height:100%;
+    top:0;
+    left:0;
+    background: url('https://i.imgur.com/8f2FzR1.png') repeat; /* tiny hearts or medical icons */
+    opacity: 0.05;
+    pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<h2 style="font-size:32px; color:#0073e6; text-shadow: 1px 1px 2px #99ccff;">I'm sick!</h2>
+
+<div id="chatBox"></div>
+
+<div id="scoreBox">
+  <div id="nameDisplay"></div>
+  <div>Score: <span id="score">0</span>/<span id="total">0</span></div>
+</div>
+
+<canvas id="fireworks"></canvas>
+
+<div id="scorePopup">
+  <div id="perfectText">PERFECT SCORE!</div>
+  <div id="popupText" style="font-size:26px; font-weight:bold;"></div>
+  <button onclick="document.getElementById('scorePopup').style.display='none'">Close</button>
+</div>
+
+<script>
+let voices = [];
+let totalScore = 0;
+let userName = "";
+
+speechSynthesis.onvoiceschanged = () => { voices = speechSynthesis.getVoices(); };
+
+// Ask for name
+userName = prompt("Enter your name:");
+document.getElementById("nameDisplay").textContent = userName;
+
+const chatBox = document.getElementById("chatBox");
+
+function addSentence(speaker, text) {
+  const box = document.createElement("div");
+  box.className = `sentence ${speaker}`;
+
+  const p = document.createElement("div");
+  p.className = "sentenceText";
+  p.textContent = `${speaker}: ${text}`;
+
+  const record = document.createElement("button");
+  record.className = "record";
+  record.textContent = "🎤 Check";
+
+  const result = document.createElement("div");
+  result.className = "result";
+
+  const feedback = document.createElement("div");
+  feedback.className = "feedback";
+
+  box.append(p, record, result, feedback);
+  chatBox.appendChild(box);
+
+  const scored = new Set();
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = "en-US";
+
+  record.onclick = () => {
+    record.textContent = "🔴 LISTENING…";
+    rec.start();
+  };
+
+  rec.onresult = e => {
+    record.textContent = "🎤 Check";
+    result.innerHTML = "";
+    feedback.textContent = "";
+
+    const spoken = e.results[0][0].transcript
+      .toLowerCase().replace(/[^\w\s]/g,"").split(/\s+/);
+    const target = text
+      .toLowerCase().replace(/[^\w\s]/g,"").split(/\s+/);
+
+    let allCorrect = true;
+
+    target.forEach((w,i) => {
+      const b = document.createElement("button");
+      b.disabled = true;
+      b.className = "wordBtn";
+      b.textContent = w;
+
+      if (spoken[i] === w) {
+        b.classList.add("correct");
+        if (!scored.has(i)) {
+          scored.add(i);
+          totalScore++;
+          document.getElementById("score").textContent = totalScore;
+        }
+      } else {
+        b.classList.add("wrong");
+        allCorrect = false;
+      }
+      result.appendChild(b);
+    });
+
+    feedback.textContent = allCorrect ? "Good job!" : "Try again";
+
+    const totalWords = parseInt(document.getElementById("total").textContent);
+    if ([...document.querySelectorAll(".result")].every(r=>r.children.length>0)) {
+      const popup = document.getElementById("scorePopup");
+      document.getElementById("popupText").textContent =
+        `Name: ${userName}\nScore: ${totalScore}/${totalWords}`;
+      popup.style.display = "block";
+
+      if(totalScore === totalWords){
+        document.getElementById("perfectText").style.display = "block";
+        showFireworks();
+      } else {
+        document.getElementById("perfectText").style.display = "none";
+      }
+    }
+  };
+
+  rec.onerror = () => record.textContent = "🎤 Check";
+}
+
+// Fireworks animation
+function showFireworks() {
+  const canvas = document.getElementById("fireworks");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext("2d");
+  const particles = [];
+
+  for(let i=0;i<200;i++){
+    particles.push({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      r: Math.random()*4+1,
+      dx: (Math.random()-0.5)*10,
+      dy: (Math.random()-0.5)*10,
+      color:`hsl(${Math.random()*360},100%,50%)`,
+      alpha:1
+    });
+  }
+
+  let duration = 0;
+  function animate(){
+    ctx.fillStyle='rgba(0,0,0,0.08)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.color;
+      ctx.globalAlpha=p.alpha;
+      ctx.fill();
+      p.x+=p.dx;
+      p.y+=p.dy;
+      p.alpha -= 0.008;
+    });
+    duration++;
+    if(duration<250){
+      requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+  }
+  animate();
+}
+
+// Initialize dialogue
+function initDialogue() {
+  chatBox.innerHTML = "";
+  totalScore = 0;
+  document.getElementById("score").textContent = 0;
+
+  const dialogue = [
+    {speaker:"A", text:"What’s wrong?"},
+    {speaker:"B", text:"I’m sick. I have a fever."},
+    {speaker:"A", text:"Oh no! You should take some medicine."},
+    {speaker:"B", text:"Okay, thank you!"},
+    {speaker:"A", text:"Get better soon!"},
+    {speaker:"B", text:"Yeah, thanks."}
+  ];
+
+  const total = dialogue.reduce((s,l)=>
+    s + l.text.toLowerCase().replace(/[^\w\s]/g,"").split(/\s+/).length
+  ,0);
+  document.getElementById("total").textContent = total;
+
+  dialogue.forEach(d => addSentence(d.speaker, d.text));
+}
+
+initDialogue();
+</script>
+</body>
+</html>
