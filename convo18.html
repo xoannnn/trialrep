@@ -1,0 +1,468 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pronunciation Checker - Game Mode</title>
+
+<style>
+/* ===== Base ===== */
+body {
+  font-family: 'Press Start 2P', cursive, system-ui, Arial, sans-serif;
+  background: radial-gradient(circle at top left, #1a1a2e, #162447);
+  padding: 24px;
+  color: #fff;
+}
+
+/* ===== App Container ===== */
+.container {
+  max-width: 720px;
+  margin: auto;
+  background: #0f3460;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 0 20px #00f5d4, 0 0 40px #162447;
+  border: 2px solid #00f5d4;
+}
+
+/* ===== Speech Bubbles ===== */
+.line {
+  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  max-width: 85%;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px #000;
+}
+
+/* A = nurse / doctor */
+.line.a {
+  background: #162447;
+  border: 2px solid #e94560;
+  margin-right: auto;
+  box-shadow: 0 0 15px #e94560;
+}
+
+/* B = patient */
+.line.b {
+  background: #1f4068;
+  border: 2px solid #00f5d4;
+  margin-left: auto;
+  text-align: right;
+  box-shadow: 0 0 15px #00f5d4;
+}
+
+/* ===== Buttons ===== */
+.check {
+  margin-top: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
+  background: #e94560;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 0 10px #e94560, 0 0 20px #e94560 inset;
+  transition: 0.2s;
+}
+
+.check:hover {
+  background: #ff2e63;
+  box-shadow: 0 0 20px #ff2e63, 0 0 30px #ff2e63 inset;
+}
+
+/* ===== Words ===== */
+.words {
+  margin-top: 10px;
+}
+
+.word {
+  margin: 4px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+  box-shadow: 0 0 5px #000;
+}
+
+.correct { background: #00f5d4; box-shadow: 0 0 10px #00f5d4; }
+.wrong { background: #ff2e63; box-shadow: 0 0 10px #ff2e63; }
+
+/* ===== Feedback ===== */
+.feedback {
+  margin-top: 8px;
+  font-weight: bold;
+  font-size: 13px;
+  text-shadow: 1px 1px #000;
+}
+
+/* ===== Score Badge ===== */
+.score {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  background: #162447;
+  color: #00f5d4;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: 0 0 10px #00f5d4, 0 0 20px #00f5d4 inset;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ===== Name Overlay ===== */
+#namePopup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#nameBox {
+  background: #1a1a2e;
+  padding: 28px;
+  border-radius: 16px;
+  text-align: center;
+  width: 300px;
+  box-shadow: 0 0 20px #00f5d4, 0 0 40px #e94560 inset;
+  border: 2px solid #00f5d4;
+}
+
+#nameBox p {
+  font-size: 14px;
+  font-weight: bold;
+  color: #00f5d4;
+  text-shadow: 1px 1px #000;
+}
+
+#nameBox input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px solid #e94560;
+  font-size: 14px;
+  margin-top: 10px;
+  background: #162447;
+  color: #fff;
+  box-shadow: 0 0 10px #e94560 inset;
+}
+
+#nameBox button {
+  margin-top: 16px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  background: #00f5d4;
+  color: #162447;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 10px #00f5d4, 0 0 20px #00f5d4 inset;
+}
+
+/* ===== Toast ===== */
+#toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #162447;
+  color: #00f5d4;
+  padding: 12px 22px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: bold;
+  box-shadow: 0 0 10px #00f5d4, 0 0 20px #00f5d4 inset;
+  display: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ===== Options for blanks ===== */
+.options {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.option {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #1f4068;
+  font-weight: bold;
+  cursor: default;
+  color: #fff;
+  box-shadow: 0 0 5px #000;
+  text-transform: uppercase;
+}
+
+.option.correct { background: #00f5d4; color: #162447; box-shadow: 0 0 10px #00f5d4; }
+
+/* ===== Fireworks Canvas ===== */
+#fireworks {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+</style>
+</head>
+
+<body>
+
+<canvas id="fireworks"></canvas>
+
+<div id="namePopup">
+  <div id="nameBox">
+    <p>Enter your name</p>
+    <input id="nameInput" type="text">
+    <button onclick="saveName()">Start</button>
+  </div>
+</div>
+
+<div class="score" id="score">0 / 0</div>
+<div id="toast"></div>
+
+<div class="container">
+
+<!-- Speech bubbles -->
+<div class="line a">
+A: What’s wrong?<br>
+<button class="check" onclick="checkSentence(
+'s1',['whats','what','is','wrong'])">Check</button>
+<div id="s1" class="words"></div>
+<div id="f1" class="feedback"></div>
+</div>
+
+<div class="line b">
+B: I’m sick. I have a _______.<br>
+<button class="check" onclick="checkSentence(
+'s2',['i','im','am','sick','have','a','headache','toothache','fever','cold'])">Check</button>
+
+<div class="options" id="opts2">
+  <button class="option" disabled>fever</button>
+  <button class="option" disabled>headache</button>
+  <button class="option" disabled>toothache</button>
+  <button class="option" disabled>cold</button>
+</div>
+
+<div id="s2" class="words"></div>
+<div id="f2" class="feedback"></div>
+</div>
+
+<div class="line a">
+A: Oh no! You should ______.<br>
+<button class="check" onclick="checkSentence(
+'s3',['oh','no','you','should','see','a','doctor','dentist','take','rest','medicine'])">Check</button>
+
+<div class="options" id="opts3">
+  <button class="option" disabled>see a doctor</button>
+  <button class="option" disabled>see a dentist</button>
+  <button class="option" disabled>take medicine</button>
+  <button class="option" disabled>take a rest</button>
+</div>
+
+<div id="s3" class="words"></div>
+<div id="f3" class="feedback"></div>
+</div>
+
+<div class="line b">
+B: Okay, thank you!<br>
+<button class="check" onclick="checkSentence(
+'s4',['okay','ok','thank','you','thanks'])">Check</button>
+<div id="s4" class="words"></div>
+<div id="f4" class="feedback"></div>
+</div>
+
+<div class="line a">
+A: Get better soon!<br>
+<button class="check" onclick="checkSentence(
+'s5',['get','better','soon'])">Check</button>
+<div id="s5" class="words"></div>
+<div id="f5" class="feedback"></div>
+</div>
+
+<div class="line b">
+B: Yeah, thanks!<br>
+<button class="check" onclick="checkSentence(
+'s6',['yeah','yes','thanks','thank','you'])">Check</button>
+<div id="s6" class="words"></div>
+<div id="f6" class="feedback"></div>
+</div>
+
+</div>
+
+<script>
+// =================== JS ===================
+let studentName = '';
+let sentenceScores = {};
+
+function saveName() {
+  studentName = document.getElementById('nameInput').value || 'Student';
+  document.getElementById('namePopup').style.display = 'none';
+  updateTotalScore();
+}
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2000);
+}
+
+function recognise(cb) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert("SpeechRecognition not supported"); return; }
+  const r = new SR();
+  r.lang = 'en-US';
+  r.start();
+  r.onresult = e => {
+    const words = e.results[0][0].transcript
+      .toLowerCase()
+      .replace(/[^\w\s]/g,'')
+      .split(/\s+/);
+    cb(words);
+  };
+}
+
+function closeEnough(a,b) {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let diff = 0;
+  for (let i=0;i<Math.min(a.length,b.length);i++)
+    if (a[i] !== b[i]) diff++;
+  return diff <= 1;
+}
+
+// 🎆 Fireworks
+function showFireworks() {
+  const canvas = document.getElementById("fireworks");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const ctx = canvas.getContext("2d");
+  const particles = [];
+
+  for (let i = 0; i < 200; i++) {
+    particles.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      r: Math.random() * 4 + 1,
+      dx: (Math.random() - 0.5) * 12,
+      dy: (Math.random() - 0.5) * 12,
+      color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+      life: 1
+    });
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.life;
+      ctx.fill();
+
+      p.x += p.dx;
+      p.y += p.dy;
+      p.life -= 0.015;
+    });
+
+    if (particles.some(p => p.life > 0)) {
+      requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  animate();
+}
+
+// Update total score + fireworks trigger
+function updateTotalScore() {
+  let totalCorrect = 0;
+  let totalWords = 0;
+  for (const k in sentenceScores) {
+    totalCorrect += sentenceScores[k].correct;
+    totalWords += sentenceScores[k].total;
+  }
+  document.getElementById('score').textContent =
+    studentName + ' ' + totalCorrect + ' / ' + totalWords;
+
+  // 🎆 Show fireworks if perfect score
+  if (totalWords > 0 && totalCorrect === totalWords) {
+    showFireworks();
+  }
+}
+
+// Check sentence logic
+function checkSentence(id, allowed) {
+  recognise(words => {
+    const box = document.getElementById(id);
+    const feed = document.getElementById('f' + id.substring(1));
+    box.innerHTML = '';
+    feed.textContent = '';
+
+    let correct = 0;
+
+    words.forEach(w => {
+      const ok = allowed.some(a => closeEnough(w,a));
+      if (ok) correct++;
+
+      const b = document.createElement('button');
+      b.disabled = true;
+      b.textContent = w;
+      b.className = 'word ' + (ok ? 'correct':'wrong');
+      box.appendChild(b);
+
+      if (id==='s2') {
+        document.querySelectorAll('#opts2 .option').forEach(opt => {
+          if (closeEnough(opt.textContent.toLowerCase(), w)) {
+            opt.classList.add('correct');
+          }
+        });
+      }
+      if (id==='s3') {
+        document.querySelectorAll('#opts3 .option').forEach(opt => {
+          if (closeEnough(opt.textContent.toLowerCase(), w)) {
+            opt.classList.add('correct');
+          }
+        });
+      }
+    });
+
+    sentenceScores[id] = { correct, total: words.length };
+    updateTotalScore();
+
+    if (correct === words.length && words.length>0) {
+      feed.textContent = 'Good job!';
+      showToast('Good job! ' + correct + ' / ' + words.length);
+    } else {
+      feed.textContent = 'Try again';
+      showToast('Try again: ' + correct + ' / ' + words.length);
+    }
+  });
+}
+</script>
+
+</body>
+</html>

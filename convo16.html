@@ -1,0 +1,373 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pronunciation Checker</title>
+
+<style>
+/* ===== Base ===== */
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(180deg, #e8f5ff, #f6fbff);
+  padding: 24px;
+}
+
+/* ===== App Container ===== */
+.container {
+  max-width: 720px;
+  margin: auto;
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 24px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+/* ===== Speech Bubbles ===== */
+.line {
+  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: 20px;
+  max-width: 85%;
+}
+
+/* A = nurse / doctor */
+.line.a {
+  background: #e0f2fe;
+  border: 2px solid #bae6fd;
+  margin-right: auto;
+}
+
+/* B = patient */
+.line.b {
+  background: #dcfce7;
+  border: 2px solid #bbf7d0;
+  margin-left: auto;
+  text-align: right;
+}
+
+/* ===== Buttons ===== */
+.check {
+  margin-top: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: none;
+  background: #0284c7;
+  color: white;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.check:hover {
+  background: #0369a1;
+}
+
+/* ===== Words ===== */
+.words {
+  margin-top: 10px;
+}
+
+.word {
+  margin: 4px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+}
+
+.correct { background: #22c55e; }
+.wrong { background: #ef4444; }
+
+/* ===== Feedback ===== */
+.feedback {
+  margin-top: 8px;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+/* ===== Score Badge ===== */
+.score {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  background: #0f172a;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: bold;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+/* ===== Name Overlay ===== */
+#namePopup {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#nameBox {
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 24px;
+  text-align: center;
+  width: 300px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+}
+
+#nameBox p {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#nameBox input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px solid #bae6fd;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+#nameBox button {
+  margin-top: 16px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* ===== Toast ===== */
+#toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: white;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: bold;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  display: none;
+}
+
+/* ===== Options for blanks ===== */
+.options {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.option {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  background: #e2e8f0;
+  font-weight: bold;
+  cursor: default;
+}
+
+.option.correct { background: #22c55e; color: white; }
+</style>
+</head>
+
+<body>
+
+<div id="namePopup">
+  <div id="nameBox">
+    <p>Enter your name</p>
+    <input id="nameInput" type="text">
+    <button onclick="saveName()">Start</button>
+  </div>
+</div>
+
+<div class="score" id="score">0 / 0</div>
+<div id="toast"></div>
+
+<div class="container">
+
+<div class="line a">
+A: What’s wrong?<br>
+<button class="check" onclick="checkSentence(
+'s1',['whats','what','is','wrong'])">Check</button>
+<div id="s1" class="words"></div>
+<div id="f1" class="feedback"></div>
+</div>
+
+<div class="line b">
+B: I’m sick. I have a _______.<br>
+<button class="check" onclick="checkSentence(
+'s2',['i','im','am','sick','have','a','headache','toothache','fever','cold'])">Check</button>
+
+<div class="options" id="opts2">
+  <button class="option" disabled>fever</button>
+  <button class="option" disabled>headache</button>
+  <button class="option" disabled>toothache</button>
+  <button class="option" disabled>cold</button>
+</div>
+
+<div id="s2" class="words"></div>
+<div id="f2" class="feedback"></div>
+</div>
+
+<div class="line a">
+A: Oh no! You should ______.<br>
+<button class="check" onclick="checkSentence(
+'s3',['oh','no','you','should','see','a','doctor','dentist','take','rest','medicine'])">Check</button>
+
+<div class="options" id="opts3">
+  <button class="option" disabled>see a doctor</button>
+  <button class="option" disabled>see a dentist</button>
+  <button class="option" disabled>take medicine</button>
+  <button class="option" disabled>take a rest</button>
+</div>
+
+<div id="s3" class="words"></div>
+<div id="f3" class="feedback"></div>
+</div>
+
+<div class="line b">
+B: Okay, thank you!<br>
+<button class="check" onclick="checkSentence(
+'s4',['okay','ok','thank','you','thanks'])">Check</button>
+<div id="s4" class="words"></div>
+<div id="f4" class="feedback"></div>
+</div>
+
+<div class="line a">
+A: Get better soon!<br>
+<button class="check" onclick="checkSentence(
+'s5',['get','better','soon'])">Check</button>
+<div id="s5" class="words"></div>
+<div id="f5" class="feedback"></div>
+</div>
+
+<div class="line b">
+B: Yeah, thanks!<br>
+<button class="check" onclick="checkSentence(
+'s6',['yeah','yes','thanks','thank','you'])">Check</button>
+<div id="s6" class="words"></div>
+<div id="f6" class="feedback"></div>
+</div>
+
+</div>
+
+<script>
+let studentName = '';
+let sentenceScores = {};
+
+function saveName() {
+  studentName = document.getElementById('nameInput').value || 'Student';
+  document.getElementById('namePopup').style.display = 'none';
+  updateTotalScore();
+}
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2000);
+}
+
+function recognise(cb) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert("SpeechRecognition not supported"); return; }
+  const r = new SR();
+  r.lang = 'en-US';
+  r.start();
+  r.onresult = e => {
+    const words = e.results[0][0].transcript
+      .toLowerCase()
+      .replace(/[^\w\s]/g,'')
+      .split(/\s+/);
+    cb(words);
+  };
+}
+
+function closeEnough(a,b) {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let diff = 0;
+  for (let i=0;i<Math.min(a.length,b.length);i++)
+    if (a[i] !== b[i]) diff++;
+  return diff <= 1;
+}
+
+function updateTotalScore() {
+  let totalCorrect = 0;
+  let totalWords = 0;
+  for (const k in sentenceScores) {
+    totalCorrect += sentenceScores[k].correct;
+    totalWords += sentenceScores[k].total;
+  }
+  document.getElementById('score').textContent =
+    studentName + ' ' + totalCorrect + ' / ' + totalWords;
+}
+
+function checkSentence(id, allowed) {
+  recognise(words => {
+    const box = document.getElementById(id);
+    const feed = document.getElementById('f' + id.substring(1));
+    box.innerHTML = '';
+    feed.textContent = '';
+
+    let correct = 0;
+
+    words.forEach(w => {
+      const ok = allowed.some(a => closeEnough(w,a));
+      if (ok) correct++;
+
+      const b = document.createElement('button');
+      b.disabled = true;
+      b.textContent = w;
+      b.className = 'word ' + (ok ? 'correct':'wrong');
+      box.appendChild(b);
+
+      // 🔹 Update blank option buttons if matched (sentence 2)
+      if (id==='s2') {
+        document.querySelectorAll('#opts2 .option').forEach(opt => {
+          if (closeEnough(opt.textContent.toLowerCase(), w)) {
+            opt.classList.add('correct');
+          }
+        });
+      }
+      // 🔹 Update blank option buttons if matched (sentence 3)
+      if (id==='s3') {
+        document.querySelectorAll('#opts3 .option').forEach(opt => {
+          const optionWords = opt.textContent.toLowerCase().split(' ');
+          // Check if all words in option are in the recognized words
+          const match = optionWords.every(ow => words.some(sw => closeEnough(sw,ow)));
+          if (match) opt.classList.add('correct');
+        });
+      }
+    });
+
+    sentenceScores[id] = { correct, total: words.length };
+    updateTotalScore();
+
+    if (correct === words.length && words.length>0) {
+      feed.textContent = 'Good job!';
+      showToast('Good job! ' + correct + ' / ' + words.length);
+    } else {
+      feed.textContent = 'Try again';
+      showToast('Try again: ' + correct + ' / ' + words.length);
+    }
+  });
+}
+</script>
+
+</body>
+</html>
