@@ -1,0 +1,415 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shopping Pronunciation Game - Jacket Forgiving (Pixel Fireworks)</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 30px;
+    padding-bottom: 90px;
+    background: linear-gradient(to bottom, #87ceeb 0%, #87ceeb 50%, #228B22 50%, #228B22 100%);
+    color: #222;
+  }
+
+  #gameContainer {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  h3 {
+    text-align: center;
+    font-size: 2em;
+    color: #fff;
+    text-shadow: 2px 2px #000;
+  }
+
+  #itemButtons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+  }
+
+  button {
+    padding: 8px 14px;
+    margin: 6px;
+    cursor: pointer;
+    border: 2px solid #000;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.9em;
+    background-color: #8B4513;
+    color: #fff;
+    box-shadow: 0 4px #654321;
+    transition: transform 0.1s;
+  }
+
+  button:hover {
+    transform: translateY(-2px);
+    background-color: #A0522D;
+  }
+
+  button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px #654321;
+  }
+
+  #nextBtn {
+    background-color: #1E90FF;
+    color: #fff;
+  }
+
+  .hidden { display: none; }
+
+  .sentence {
+    margin: 12px 0;
+    padding: 12px 16px;
+    border-radius: 4px;
+    background-color: #C2B280;
+    border: 2px solid #000;
+    font-size: 1.2em;
+    box-shadow: 2px 2px #000;
+    text-align: left;
+  }
+
+  .speaker-b { text-align: right; }
+
+  .resultBox {
+    background-color: #d0e7ff;
+    border: 2px solid #000;
+    padding: 12px 16px;
+    border-radius: 4px;
+    font-size: 1em;
+    box-shadow: 2px 2px #000;
+    margin-top: 8px;
+  }
+
+  .bottom { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); }
+
+  span.listening {
+    margin-left: 8px;
+    font-style: italic;
+    animation: blink 1s infinite;
+    color: #32CD32;
+  }
+
+  @keyframes blink {
+    0% { opacity: 0.2; }
+    50% { opacity: 1; }
+    100% { opacity: 0.2; }
+  }
+
+  .resultButton { font-size: 0.9em; margin-right: 4px; font-weight:bold; }
+  .resultButton.correct { background-color: #4CAF50; color: #fff; opacity:1; }
+  .resultButton.wrong { background-color: #f44336; color: #fff; opacity:1; }
+
+  .feedback {
+    font-weight: bold;
+    margin-top: 8px;
+    animation: popFeedback 0.6s ease forwards;
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:4px;
+    font-size: 1.2em;
+  }
+
+  @keyframes popFeedback {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  #scoreDisplay {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    font-weight: 700;
+    font-size: 1.6em;
+    background-color: #6B8E23;
+    padding: 12px 24px;
+    border: 2px solid #000;
+    border-radius: 4px;
+    box-shadow: 2px 2px #000;
+    color: #fff;
+  }
+
+  #fireworksCanvas { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999; }
+
+  #congratsBox {
+    position: fixed;
+    top:30%; left:50%;
+    transform:translate(-50%,-50%);
+    background-color: rgba(50,205,50,0.95);
+    padding:50px 80px;
+    font-size:2.4em;
+    font-weight:bold;
+    border-radius:12px;
+    text-align:center;
+    z-index:10000;
+    display:none;
+    color:#fff;
+    text-shadow: 2px 2px #000;
+    box-shadow:0 0 20px #fff,0 0 40px #32CD32,0 0 60px #228B22;
+  }
+
+  #testFireworksBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 30px;
+    background-color: #1E90FF;
+  }
+
+  #testPixelBtn {
+    position: fixed;
+    bottom: 60px;
+    right: 30px;
+    background-color: #FFA500;
+    color: #fff;
+  }
+
+  /* Pixel overlay for animation */
+  #pixelCanvas {
+    position: fixed;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    z-index:20000;
+    display:none;
+  }
+
+</style>
+</head>
+<body>
+
+<div id="gameContainer">
+
+<h3>Choose an item:</h3>
+<div id="itemButtons"></div>
+
+<!-- Steps -->
+<div id="step1" class="hidden"><p id="sentence1" class="sentence"></p><div id="checkContainer1"><button onclick="listenAndCheck(1)">Check</button></div><span id="listening1" class="hidden listening">Listening…</span><div id="result1" class="resultBox"></div></div>
+<div id="step2" class="hidden"><p id="sentence2" class="sentence"></p><div id="checkContainer2"><button onclick="listenAndCheck(2)">Check</button></div><span id="listening2" class="hidden listening">Listening…</span><div id="result2" class="resultBox"></div></div>
+<div id="step3" class="hidden"><p id="sentence3" class="sentence speaker-b"></p><div id="checkContainer3"><button onclick="listenAndCheck(3)">Check</button></div><span id="listening3" class="hidden listening">Listening…</span><div id="result3" class="resultBox"></div></div>
+<div id="step4" class="hidden"><p id="sentence4" class="sentence"></p><div id="checkContainer4"><button onclick="listenAndCheck(4)">Check</button></div><span id="listening4" class="hidden listening">Listening…</span><div id="result4" class="resultBox"></div></div>
+<div id="step5" class="hidden"><p id="sentence5" class="sentence"></p><div id="checkContainer5"><button onclick="listenAndCheck(5)">Check</button></div><span id="listening5" class="hidden listening">Listening…</span><div id="result5" class="resultBox"></div></div>
+<div id="step6" class="hidden"><p id="sentence6" class="sentence speaker-b"></p><div id="checkContainer6"><button onclick="listenAndCheck(6)">Check</button></div><span id="listening6" class="hidden listening">Listening…</span><div id="result6" class="resultBox"></div></div>
+<div id="step7" class="hidden"><p id="sentence7" class="sentence speaker-b"></p><div id="checkContainer7"><button onclick="listenAndCheck(7)">Check</button></div><span id="listening7" class="hidden listening">Listening…</span><div id="result7" class="resultBox"></div></div>
+<div id="step8" class="hidden"><p id="sentence8" class="sentence"></p><div id="checkContainer8"><button onclick="listenAndCheck(8)">Check</button></div><span id="listening8" class="hidden listening">Listening…</span><div id="result8" class="resultBox"></div></div>
+<div id="step9" class="hidden"><p id="sentence9" class="sentence"></p><div id="checkContainer9"><button onclick="listenAndCheck(9)">Check</button></div><span id="listening9" class="hidden listening">Listening…</span><div id="result9" class="resultBox"></div></div>
+
+<div class="bottom">
+  <button id="nextBtn" onclick="nextStep()">Next</button>
+</div>
+
+</div>
+
+<div id="scoreDisplay">Score: 0 / 0</div>
+<canvas id="fireworksCanvas"></canvas>
+<div id="congratsBox">Perfect Score! Amazing Job!</div>
+<button id="testFireworksBtn" class="hidden">Test Fireworks</button>
+<button id="testPixelBtn" class="hidden">Test Pixelation</button>
+<canvas id="pixelCanvas"></canvas>
+
+<script>
+const items={sneakers:"plural", pants:"plural", shorts:"plural", jacket:"singular", watch:"singular", bracelet:"singular"};
+const itemEmojis={sneakers:"👟", pants:"👖", shorts:"🩳", jacket:"🧥", watch:"⌚", bracelet:"📿"};
+let step=0,sentences={},currentNumber=null,currentItem=null;
+const adjectives=["cool","colorful","cute","simple"];
+const scorePerStep={};
+let totalWordsForItem=0;
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+const recognition=new SpeechRecognition();
+recognition.lang="en-US";
+
+const itemButtons = document.getElementById("itemButtons");
+for (let item in items) {
+    const btn = document.createElement("button");
+    btn.textContent = item + " " + (itemEmojis[item] || "");
+    btn.addEventListener("click", function() {
+        start(item);
+    });
+    itemButtons.appendChild(btn);
+}
+
+function start(item){
+  if(currentItem!==item){ for(let key in scorePerStep){ delete scorePerStep[key]; } }
+  currentItem=item; step=1; currentNumber=items[item];
+  const determiner=currentNumber==="plural"?"These":"This";
+  const verb=currentNumber==="plural"?"are":"is";
+  const pronoun=currentNumber==="plural"?"them":"it";
+  const howAbout=currentNumber==="plural"?"How about these?":"How about this?";
+  const fitVerb=currentNumber==="plural"?"fit":"fits";
+  const fitPronoun=currentNumber==="plural"?"they":"it";
+  const takePronoun=currentNumber==="plural"?"them":"it";
+  const adj=adjectives[Math.floor(Math.random()*adjectives.length)];
+  sentences={
+    1:`${determiner} ${item} ${verb} so ${adj}.`,
+    2:`May I try ${pronoun} on?`,
+    3:`Sure.`,
+    4:currentNumber==="plural"?"They are a little small for me.":"It is a little small for me.",
+    5:currentNumber==="plural"?"May I try bigger ones?":"May I try a bigger one?",
+    6:`Of course. Just a moment, please.`,
+    7:howAbout,
+    8:`Oh, ${fitPronoun} ${fitVerb} perfectly.`,
+    9:`I'll take ${takePronoun}.`
+  };
+  totalWordsForItem=Object.values(sentences).reduce((sum,s)=>sum+s.split(" ").length,0);
+  document.querySelectorAll('[id^="step"]').forEach(s=>s.classList.add("hidden"));
+  showSentence(1);
+  document.getElementById("nextBtn").disabled=false;
+  updateScoreDisplay();
+}
+
+function showSentence(n){ 
+  const p=document.getElementById(`sentence${n}`); 
+  p.textContent=sentences[n]; 
+  document.getElementById(`step${n}`).classList.remove("hidden"); 
+  document.getElementById(`checkContainer${n}`).style.textAlign=window.getComputedStyle(p).textAlign; 
+}
+
+function cleanWord(word){ return word.replace(/[.,!?;:']/g,"").toLowerCase(); }
+
+function updateScoreDisplay(){
+  const currentScore=Object.values(scorePerStep).reduce((a,b)=>a+b,0);
+  document.getElementById("scoreDisplay").textContent=`Score: ${currentScore} / ${totalWordsForItem}`;
+  if(currentScore===totalWordsForItem && totalWordsForItem>0) pixelFireworksSequence();
+}
+
+function listenAndCheck(stepNum){
+  const listeningSpan=document.getElementById(`listening${stepNum}`);
+  listeningSpan.classList.remove("hidden");
+  recognition.start();
+  recognition.onresult=e=>{
+    const spoken=e.results[0][0].transcript.toLowerCase().split(" ");
+    const words=sentences[stepNum].split(" ");
+    const resultDiv=document.getElementById(`result${stepNum}`);
+    resultDiv.innerHTML="";
+    resultDiv.style.textAlign=window.getComputedStyle(document.getElementById(`sentence${stepNum}`)).textAlign;
+    let allCorrect=true, points=0;
+    words.forEach((word,i)=>{
+      const btn=document.createElement("button"); 
+      btn.disabled=true;
+      if(word.toLowerCase()==="jacket"){
+        const accepted=["jacket","jaket"];
+        if(accepted.includes(spoken[i])){ 
+          btn.textContent=word; 
+          btn.className="correct resultButton"; 
+          points++; 
+        } else { 
+          btn.textContent=spoken[i]||"[...]"; 
+          btn.className="wrong resultButton"; 
+          allCorrect=false; 
+        }
+      } else{
+        if(cleanWord(spoken[i]||"")===cleanWord(word)){ 
+          btn.textContent=word; 
+          btn.className="correct resultButton"; 
+          points++; 
+        } else { 
+          btn.textContent=spoken[i]||"[...]"; 
+          btn.className="wrong resultButton"; 
+          allCorrect=false; 
+        }
+      }
+      resultDiv.appendChild(btn);
+    });
+    scorePerStep[stepNum]=points;
+    updateScoreDisplay();
+    const feedback=document.createElement("p");
+    feedback.className="feedback";
+    feedback.style.color=allCorrect?"green":"red";
+    feedback.textContent=allCorrect?"Great job!!!":"Try again!";
+    resultDiv.appendChild(feedback);
+  };
+  recognition.onend=()=>{ listeningSpan.classList.add("hidden"); };
+}
+
+function nextStep(){
+  step++;
+  if(sentences[step]) showSentence(step);
+  else{
+    document.getElementById("nextBtn").disabled=true;
+    const itemButton=Array.from(itemButtons.children).find(btn=>btn.textContent.startsWith(currentItem));
+    if(itemButton){ itemButton.style.backgroundColor="blue"; itemButton.disabled=true; itemButton.style.color="white"; itemButton.style.opacity=0.6; }
+  }
+}
+
+/* Fireworks */
+const canvas=document.getElementById("fireworksCanvas");
+const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+let fireworks=[], particles=[], fireworksActive=false;
+
+/* Pixelation animation before fireworks */
+const pixelCanvas=document.getElementById("pixelCanvas");
+const pixelCtx=pixelCanvas.getContext("2d");
+pixelCanvas.width=window.innerWidth; pixelCanvas.height=window.innerHeight;
+
+function pixelFireworksSequence(){
+  pixelCanvas.style.display="block";
+  const blockSize=16;
+  const duration=750; // 0.75 seconds
+  const startTime=Date.now();
+
+  function animate(){
+    const now=Date.now();
+    if(now-startTime>duration){ 
+      pixelCanvas.style.display="none"; 
+      triggerFireworks(); 
+      return; 
+    }
+
+    for(let x=0;x<pixelCanvas.width;x+=blockSize){
+      for(let y=0;y<pixelCanvas.height;y+=blockSize){
+        pixelCtx.fillStyle=`hsl(${Math.random()*360},100%,50%)`;
+        pixelCtx.fillRect(x,y,blockSize,blockSize);
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+function triggerFireworks(){
+  if(fireworksActive) return;
+  fireworksActive=true;
+  const congrats=document.getElementById("congratsBox");
+  congrats.style.display="block";
+  const duration=5000;
+  const endTime=Date.now()+duration;
+  function animate(){
+    ctx.fillStyle="rgba(0,0,0,0.2)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+    if(Date.now()>endTime){ fireworksActive=false; fireworks=[]; particles=[]; ctx.clearRect(0,0,canvas.width,canvas.height); congrats.style.display="none"; return; }
+    if(Math.random()<0.15){
+      const x=Math.random()*canvas.width;
+      const y=canvas.height;
+      const targetY=Math.random()*canvas.height/2;
+      fireworks.push({x,y,targetY,color:`hsl(${Math.random()*360},100%,50%)`});
+    }
+    for(let i=fireworks.length-1;i>=0;i--){
+      const f=fireworks[i];
+      f.y-=5+Math.random()*2;
+      ctx.beginPath(); ctx.arc(f.x,f.y,4,0,Math.PI*2); ctx.fillStyle=f.color; ctx.fill();
+      if(f.y<=f.targetY){
+        fireworks.splice(i,1);
+        for(let j=0;j<50;j++){ particles.push({x:f.x,y:f.y,dx:(Math.random()-0.5)*8,dy:(Math.random()-0.5)*8,color:`hsl(${Math.random()*360},100%,50%)`,life:40+Math.random()*20})}
+      }
+    }
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i];
+      p.x+=p.dx; p.y+=p.dy; p.dy+=0.05; ctx.beginPath(); ctx.arc(p.x,p.y,2,0,Math.PI*2); ctx.fillStyle=p.color; ctx.fill();
+      p.life--;
+      if(p.life<=0) particles.splice(i,1);
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+</script>
+
+</body>
+</html>
