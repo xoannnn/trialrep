@@ -169,6 +169,34 @@
       border-bottom-left-radius: 5px;
     }
 
+    /* Interviewee message with avatar */
+.intervieweeWrapper {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+
+.intervieweeAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.intervieweeAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+
+
+
+
+    
+
     #chatInputContainer {
       display: flex;
       flex-direction: column;
@@ -296,28 +324,56 @@
     addMessage("Hi, I'm John. Please ask me a question 🙂", 'interviewee');
     });
 
-    function addMessage(text,type){
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'message ' + (type==='student'?'studentMsg':'intervieweeMsg');
-      msgDiv.innerText = text;
-      chatMessages.appendChild(msgDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
+function addMessage(text, type) {
+  if (type === 'interviewee') {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'intervieweeWrapper';
 
-    function typeAnswer(answer){
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'message intervieweeMsg';
-      chatMessages.appendChild(msgDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      let i=0;
-      const interval = setInterval(()=>{
-        msgDiv.innerText = answer.substring(0,i+1);
-        i++;
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        if(i>=answer.length) clearInterval(interval);
-      },25); // adjust speed here
-    }
+    const avatar = document.createElement('div');
+    avatar.className = 'intervieweeAvatar';
+    avatar.innerHTML = `<img src="https://xoannnn.github.io/trialrep/capture222.JPG">`;
 
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message intervieweeMsg';
+    msgDiv.innerText = text;
+
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(msgDiv);
+    chatMessages.appendChild(wrapper);
+  } else {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message studentMsg';
+    msgDiv.innerText = text;
+    chatMessages.appendChild(msgDiv);
+  }
+
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+ function typeAnswer(answer) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'intervieweeWrapper';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'intervieweeAvatar';
+  avatar.innerHTML = `<img src="https://xoannnn.github.io/trialrep/capture222.JPG">`;
+
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'message intervieweeMsg';
+
+  wrapper.appendChild(avatar);
+  wrapper.appendChild(msgDiv);
+  chatMessages.appendChild(wrapper);
+
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  let i = 0;
+  const interval = setInterval(() => {
+    msgDiv.innerText = answer.substring(0, i + 1);
+    i++;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (i >= answer.length) clearInterval(interval);
+  }, 25);
+}
     function findAnswer(input){
       input = input.trim().toLowerCase().replace(/[?.!]/g,''); // remove punctuation
 
@@ -377,4 +433,5 @@
 </body>
 
 </html>
+
 
