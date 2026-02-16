@@ -312,6 +312,13 @@
     };
 
     const inappropriateKeywords = ['sex','fuck','bitch','shit','damn','ass','idiot'];
+  
+    const retryMessages = [
+  "Oops 😅 Can you try again?",
+  "Hmm… say it one more time 🙂",
+  "Sorry, I didn’t catch that. Can you repeat?",
+  "Almost! Try asking again 😊"
+];
 
     const thumbnail = document.getElementById('thumbnail');
     const chatContainer = document.getElementById('chatContainer');
@@ -397,7 +404,7 @@ function addMessage(text, type) {
         if(allWordsMatch) return qaData[question];
       }
 
-      return "I’m not sure I understood, can you repeat?";
+      return retryMessages[Math.floor(Math.random() * retryMessages.length)];
     }
 
     chatInput.addEventListener('keypress',(e)=>{
@@ -436,6 +443,7 @@ function addMessage(text, type) {
 </body>
 
 </html>
+
 
 
 
