@@ -291,6 +291,9 @@
     thumbnail.addEventListener('click', ()=>{
       chatContainer.style.display='flex';
       document.getElementById('thumbnailCard').style.display='none'; // hide thumbnail card
+
+      // 👉 FIRST MESSAGE FROM JOHN
+    addMessage("Hi, I'm John. Please ask me a question 🙂", 'interviewee');
     });
 
     function addMessage(text,type){
@@ -374,3 +377,4 @@
 </body>
 
 </html>
+
