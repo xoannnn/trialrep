@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Capacitive Touch Piano</title>
+<style>
+  body {
+    margin: 0;
+    background: #222;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+  }
+
+  .piano {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 30px;
+  }
+
+  .key {
+    width: 90px;
+    height: 260px;
+    background: white;
+    color: black;
+    border-radius: 10px;
+    font-size: 28px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 20px;
+    user-select: none;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .key.active {
+    background: #ffd966;
+  }
+
+  #hint {
+    font-size: 16px;
+    color: #aaa;
+  }
+</style>
+</head>
+<body>
+
+<div class="piano">
+  <div class="key" data-note="C">C</div>
+  <div class="key" data-note="D">D</div>
+  <div class="key" data-note="E">E</div>
+  <div class="key" data-note="F">F</div>
+</div>
+
+<div id="hint">Click anywhere on the page once to enable sound</div>
+
+<script>
+  // ---------------- AUDIO SETUP ----------------
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioContext();
+
+  const frequencies = {
+    C: 261.63,
+    D: 293.66,
+    E: 329.63,
+    F: 349.23
+  };
+
+  function playNote(note) {
+    if (audioCtx.state !== 'running') return;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.value = frequencies[note];
+
+    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+
+    // Visual feedback
+    const key = document.querySelector(`[data-note="${note}"]`);
+    key.classList.add('active');
+    setTimeout(() => key.classList.remove('active'), 150);
+  }
+
+  // ---------------- UNLOCK AUDIO ----------------
+  function unlockAudio() {
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().then(() => {
+        console.log('Audio unlocked!');
+        document.getElementById('hint').textContent = 'Sound enabled! Play with foil or arrow keys.';
+      });
+    }
+  }
+
+  // Unlock on first click anywhere
+  document.body.addEventListener('click', unlockAudio, { once: true });
+
+  // ---------------- KEYBOARD INPUT ----------------
+  document.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+
+    if (e.key === 'ArrowUp') playNote('C');
+    if (e.key === 'ArrowDown') playNote('D');
+    if (e.key === 'ArrowRight') playNote('E');
+    if (e.key === 'ArrowLeft') playNote('F');
+  });
+
+  // ---------------- MOUSE INPUT ----------------
+  document.querySelectorAll('.key').forEach(key => {
+    key.addEventListener('mousedown', () => {
+      playNote(key.dataset.note);
+    });
+  });
+</script>
+
+</body>
+</html>
